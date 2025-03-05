@@ -1,0 +1,64 @@
+name: Shape of You AH - CI
+
+on:
+  push:
+    branches:
+      - main
+      - develop
+  pull_request:
+    branches:
+      - main
+      - develop
+
+jobs:
+  check-build:
+    runs-on: ubuntu-latest
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_DATABASE: shape_of_you_ah
+          MYSQL_ROOT_PASSWORD: root
+          MYSQL_USER: app
+          MYSQL_PASSWORD: password
+        ports:
+          - 3306:3306
+        options: --health-cmd="mysqladmin ping" --health-interval=10s --health-timeout=5s --health-retries=3
+    
+    steps:
+      - name: Récupération du code
+        uses: actions/checkout@v4
+      
+      - name: Installation de PHP et extensions
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: 8.2
+          extensions: mbstring, xml, ctype, iconv, pdo_mysql
+          coverage: none
+      
+      - name: Installation de Composer
+        run: composer install --prefer-dist --no-progress
+      
+      - name: Configuration de l'environnement
+        run: cp .env .env.test
+      
+      - name: Configuration de la base de données
+        env:
+          DATABASE_URL: "mysql://app:password@127.0.0.1:3306/shape_of_you_ah"
+        run: |
+          php bin/console doctrine:database:create --if-not-exists
+          php bin/console doctrine:migrations:migrate --no-interaction
+      
+      - name: Installation de Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+      
+      - name: Installation des dépendances NPM
+        run: npm install
+      
+      - name: Compilation des assets
+        run: npm run build
+      
+      - name: Vérification que Symfony fonctionne
+        run: php bin/console cache:clear
