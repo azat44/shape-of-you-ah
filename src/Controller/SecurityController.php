@@ -17,7 +17,7 @@ class SecurityController extends AbstractController
     public function login(AuthenticationUtils $authenticationUtils): Response
     {
         if ($this->getUser()) {
-            return $this->redirectToRoute('app_main');
+            return $this->redirectToRoute('app_home');
         }
 
         $error = $authenticationUtils->getLastAuthenticationError();
@@ -33,7 +33,7 @@ class SecurityController extends AbstractController
     public function register(
         Request $request,
         UserPasswordHasherInterface $passwordHasher,
-        EntityManagerInterface $entityManager
+        EntityManagerInterface $entityManager  
     ): Response {
         $user = new User();
         $form = $this->createForm(RegistrationType::class, $user);
@@ -45,7 +45,7 @@ class SecurityController extends AbstractController
                 $form->get('plainPassword')->getData()
             );
             $user->setPassword($hashedPassword);
-            $user->setRoles(['ROLE_USER']); 
+            $user->setRoles(['ROLE_USER']);
 
             $entityManager->persist($user);
             $entityManager->flush();
@@ -62,5 +62,11 @@ class SecurityController extends AbstractController
     public function logout(): void
     {
         throw new \LogicException('Cette méthode peut rester vide, Symfony gère la déconnexion.');
+    }
+    
+    #[Route(path: '/', name: 'app_home')]
+    public function home(): Response
+    {
+        return $this->render('default/index.html.twig');
     }
 }

@@ -108,19 +108,19 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
 
     public function getUserIdentifier(): string
     {
-        return (string) $this->username;
+        return (string) $this->email;
     }
 
     private ?string $plainPassword = null;
 
-public function getPlainPassword(): ?string
-{
-    return $this->plainPassword;
-}
+    public function getPlainPassword(): ?string
+    {
+        return $this->plainPassword;
+    }
 
-public function setPlainPassword(?string $plainPassword): self
-{
-    $this->plainPassword = $plainPassword;
-    return $this;
-}
+    public function setPlainPassword(?string $plainPassword): self
+    {
+        $this->plainPassword = $plainPassword;
+        return $this;
+    }
 }
