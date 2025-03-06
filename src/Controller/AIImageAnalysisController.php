@@ -1,63 +1,61 @@
-<?php
-namespace App\Controller;
+<?php 
+namespace App\Controller;  
 
-use App\Service\AIImageAnalysisService;
-use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
-use Symfony\Component\HttpFoundation\Request;
-use Symfony\Component\HttpFoundation\Response;
-use Symfony\Component\Routing\Annotation\Route;
-use Symfony\Component\String\Slugger\SluggerInterface;
-use Symfony\Component\Security\Http\Attribute\IsGranted;
+use App\Service\AIRecommendationService; 
+use Symfony\Bundle\FrameworkBundle\Controller\AbstractController; 
+use Symfony\Component\HttpFoundation\JsonResponse; 
+use Symfony\Component\HttpFoundation\Request; 
+use Symfony\Component\Routing\Annotation\Route;  
 
-#[Route('/ai/image')]
-#[IsGranted('ROLE_USER')]
-class AIImageAnalysisController extends AbstractController
-{
-    private $slugger;
-    
-    public function __construct(SluggerInterface $slugger)
-    {
-        $this->slugger = $slugger;
-    }
+class AIImageAnalysisController extends AbstractController {     
+    private AIRecommendationService $aiService;      
 
-    #[Route('/analyze', name: 'app_ai_image_analyze')]
-    public function showAnalyzeForm(): Response
-    {
-        return $this->render('ai/image_analyze.html.twig');
-    }
+    public function __construct(AIRecommendationService $aiService) {         
+        $this->aiService = $aiService;     
+    }      
 
-    #[Route('/process', name: 'app_ai_image_process', methods: ['POST'])]
-    public function processImage(Request $request, AIImageAnalysisService $aiService): Response
-    {
-        $imageFile = $request->files->get('image');
-        
-        if (!$imageFile) {
-            $this->addFlash('error', 'Veuillez télécharger une image.');
-            return $this->redirectToRoute('app_ai_image_analyze');
-        }
-        
-        $originalFilename = pathinfo($imageFile->getClientOriginalName(), PATHINFO_FILENAME);
-        $safeFilename = $this->slugger->slug($originalFilename);
-        $newFilename = $safeFilename.'-'.uniqid().'.'.$imageFile->guessExtension();
-        
-        $uploadDir = $this->getParameter('kernel.project_dir') . '/public/uploads/temp/';
-        if (!file_exists($uploadDir)) {
-            mkdir($uploadDir, 0777, true);
-        }
-        
-        $imageFile->move($uploadDir, $newFilename);
-        $imagePath = '/uploads/temp/' . $newFilename;
-        
-        try {
-            $detectedItems = $aiService->analyzeImage($uploadDir . $newFilename);
-            
-            return $this->render('ai/image_results.html.twig', [
-                'imagePath' => $imagePath,
-                'detectedItems' => $detectedItems
-            ]);
-        } catch (\Exception $e) {
-            $this->addFlash('error', 'Erreur lors de l\'analyse de l\'image: ' . $e->getMessage());
-            return $this->redirectToRoute('app_ai_image_analyze');
-        }
-    }
+    #[Route('/ai/image/analyze', name: 'app_ai_image_analyze', methods: ['GET'])]     
+    public function showAnalyzePage() {         
+        return $this->render('ai/image_analyze.html.twig');     
+    }      
+
+    #[Route('/ai/image/analyze-ajax', name: 'app_analyze_image', methods: ['POST'])]     
+    public function analyzeImage(Request $request): JsonResponse {         
+        $uploadedFile = $request->files->get('image');                  
+
+        if (!$uploadedFile) {             
+            return new JsonResponse([                 
+                'status' => 'error',                  
+                'message' => 'Aucune image envoyée'             
+            ], 400);         
+        }                  
+
+        $imagePath = $uploadedFile->getRealPath();         
+        $imageContent = file_get_contents($imagePath);                  
+
+        try {             
+            $result = $this->aiService->analyzeImage(null, null, $imageContent);             
+            $detectedItems = $result['detected_items'] ?? [];                          
+
+            $detectedText = "Éléments détectés :\n\n";             
+            if (empty($detectedItems)) {                 
+                $detectedText .= "Aucun élément de vêtement n'a été détecté dans cette image.";             
+            } else {                 
+                foreach ($detectedItems as $item) {                     
+                    $detectedText .= "• {$item['name']}\n";                 
+                }             
+            }                          
+
+            return new JsonResponse([                 
+                'status' => 'success',                 
+                'generated_text' => $detectedText,                 
+                'detected_items' => $detectedItems             
+            ]);         
+        } catch (\Exception $e) {             
+            return new JsonResponse([                 
+                'status' => 'error',                 
+                'message' => 'Erreur lors de l\'analyse: ' . $e->getMessage()             
+            ], 500);         
+        }     
+    } 
 }

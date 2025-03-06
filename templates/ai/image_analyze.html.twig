@@ -1,79 +1,136 @@
 {% extends 'base.html.twig' %}
 
-{% block title %}Analyse d'Image | Shape of You{% endblock %}
+{% block title %}Analyse de Tenue | Shape of You{% endblock %}
 
 {% block body %}
-<div class="max-w-6xl mx-auto">
-    <div class="bg-white dark:bg-gray-800 shadow-md rounded-lg overflow-hidden p-6">
-        <h1 class="text-2xl font-bold mb-6 dark:text-white">Analyse de Tenue</h1>
+<div class="min-h-screen flex flex-col items-center justify-center bg-white">
+    <div class="w-full max-w-2xl mx-auto px-4">
+        <h1 class="text-4xl font-bold text-center mb-4">Analyser votre Tenue</h1>
+        <p class="text-center mb-8">Notre IA va détecter les vêtements dans votre image</p>
         
-        <div class="mb-8">
-            <p class="text-gray-600 dark:text-gray-400 mb-4">Téléchargez une photo de votre tenue et notre IA détectera automatiquement les différents éléments.</p>
-        </div>
-        
-        <form action="{{ path('app_ai_image_process') }}" method="post" enctype="multipart/form-data" class="space-y-6">
-            <div class="border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg p-6 text-center" id="dropzone">
-                <i class="fas fa-cloud-upload-alt text-5xl text-gray-400 mb-4"></i>
-                <p class="text-gray-600 dark:text-gray-400 mb-2">Déposez votre image ici ou cliquez pour parcourir</p>
-                <p class="text-sm text-gray-500 dark:text-gray-500">Formats acceptés: JPG, PNG, WEBP - Max 5MB</p>
-                
-                <input type="file" id="image" name="image" accept="image/*" class="hidden" required>
-                <div id="preview" class="mt-4 hidden">
-                    <img id="image-preview" src="" alt="Aperçu" class="max-h-64 mx-auto object-contain">
+        <div class="bg-white rounded-xl shadow-lg p-6">
+            <form id="upload-form" enctype="multipart/form-data" class="space-y-6">
+                <div class="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center">
+                    <input type="file" id="image-input" name="image" accept="image/*" class="hidden">
+                    
+                    <div id="upload-text">
+                        <p class="text-lg text-gray-600">Sélectionnez une image de tenue</p>
+                    </div>
+                    
+                    <div id="preview-container" class="mt-4 hidden">
+                        <img id="image-preview" src="#" alt="Aperçu" class="max-h-64 mx-auto rounded-lg">
+                        <p id="file-name" class="mt-2 text-sm text-gray-500"></p>
+                    </div>
+                </div>
+
+                <div class="flex justify-center">
+                    <button type="submit" id="analyze-button" class="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg">
+                        <span id="button-text">Analyser</span>
+                        <svg id="loading-spinner" class="animate-spin ml-2 h-5 w-5 text-white hidden inline-block" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                    </button>
+                </div>
+            </form>
+
+            <div id="result-container" class="mt-8 hidden">
+                <div class="bg-gray-50 rounded-xl p-6">
+                    <h2 class="text-xl font-semibold mb-4">Résultat de l'analyse</h2>
+                    <div id="result" class="text-lg"></div>
+                    
+                    <div class="mt-4 flex justify-end">
+                        <button id="new-analysis" class="px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-800 rounded">
+                            Nouvelle analyse
+                        </button>
+                    </div>
                 </div>
             </div>
-            
-            <div class="text-center">
-                <button type="submit" class="px-6 py-3 bg-primary-dark hover:bg-primary text-white rounded-md">
-                    <i class="fas fa-search mr-2"></i> Analyser ma tenue
-                </button>
-            </div>
-        </form>
+        </div>
     </div>
 </div>
 
 <script>
-    const dropzone = document.getElementById('dropzone');
-    const fileInput = document.getElementById('image');
-    const preview = document.getElementById('preview');
+document.addEventListener('DOMContentLoaded', function() {
+    const fileInput = document.getElementById('image-input');
+    const previewContainer = document.getElementById('preview-container');
     const imagePreview = document.getElementById('image-preview');
+    const fileName = document.getElementById('file-name');
+    const uploadText = document.getElementById('upload-text');
     
-    dropzone.addEventListener('click', () => {
-        fileInput.click();
-    });
+    uploadText.addEventListener('click', () => fileInput.click());
     
-    dropzone.addEventListener('dragover', (e) => {
-        e.preventDefault();
-        dropzone.classList.add('border-primary-dark');
-    });
-    
-    dropzone.addEventListener('dragleave', () => {
-        dropzone.classList.remove('border-primary-dark');
-    });
-    
-    dropzone.addEventListener('drop', (e) => {
-        e.preventDefault();
-        dropzone.classList.remove('border-primary-dark');
-        
-        if (e.dataTransfer.files.length) {
-            fileInput.files = e.dataTransfer.files;
-            updatePreview();
-        }
-    });
-    
-    fileInput.addEventListener('change', updatePreview);
-    
-    function updatePreview() {
-        if (fileInput.files && fileInput.files[0]) {
+    fileInput.addEventListener('change', function() {
+        const file = this.files[0];
+        if (file && file.type.startsWith('image/')) {
             const reader = new FileReader();
             
-            reader.onload = (e) => {
+            reader.onload = function(e) {
                 imagePreview.src = e.target.result;
-                preview.classList.remove('hidden');
-            };
+                fileName.textContent = file.name;
+                
+                uploadText.classList.add('hidden');
+                previewContainer.classList.remove('hidden');
+            }
             
-            reader.readAsDataURL(fileInput.files[0]);
+            reader.readAsDataURL(file);
         }
-    }
+    });
+    
+    const uploadForm = document.getElementById('upload-form');
+    const analyzeButton = document.getElementById('analyze-button');
+    const buttonText = document.getElementById('button-text');
+    const loadingSpinner = document.getElementById('loading-spinner');
+    const resultContainer = document.getElementById('result-container');
+    const resultDiv = document.getElementById('result');
+    const newAnalysisBtn = document.getElementById('new-analysis');
+    
+    uploadForm.addEventListener('submit', async function(event) {
+        event.preventDefault();
+        
+        if (fileInput.files.length === 0) {
+            alert('Veuillez sélectionner une image !');
+            return;
+        }
+        
+        analyzeButton.disabled = true;
+        buttonText.textContent = 'Analyse en cours...';
+        loadingSpinner.classList.remove('hidden');
+        
+        const formData = new FormData();
+        formData.append('image', fileInput.files[0]);
+        
+        try {
+            const response = await fetch("{{ path('app_analyze_image') }}", {
+                method: 'POST',
+                body: formData
+            });
+            
+            const data = await response.json();
+            
+            resultContainer.classList.remove('hidden');
+            
+            if (data.status === 'success') {
+                resultDiv.innerHTML = `<p>${data.generated_text.replace(/\n/g, '<br>')}</p>`;
+            } else {
+                resultDiv.innerHTML = `<p class="text-red-500">Erreur : ${data.message || 'Analyse impossible.'}</p>`;
+            }
+        } catch (error) {
+            resultContainer.classList.remove('hidden');
+            resultDiv.innerHTML = `<p class="text-red-500">Erreur : ${error.message}</p>`;
+        } finally {
+            analyzeButton.disabled = false;
+            buttonText.textContent = 'Analyser';
+            loadingSpinner.classList.add('hidden');
+        }
+    });
+    
+    newAnalysisBtn.addEventListener('click', function() {
+        resultContainer.classList.add('hidden');
+        previewContainer.classList.add('hidden');
+        uploadText.classList.remove('hidden');
+        fileInput.value = '';
+    });
+});
 </script>
 {% endblock %}

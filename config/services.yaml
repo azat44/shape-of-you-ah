@@ -17,3 +17,6 @@ services:
     App\Service\AIRecommendationService:
         arguments:
             $apiKey: '%claude_api_key%'
+            $httpClient: '@http_client'
+            $logger: '@logger'
+    

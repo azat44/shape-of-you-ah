@@ -26,6 +26,190 @@ class AIRecommendationService
         $this->userWardrobeRepository = $userWardrobeRepository;
     }
     
+    public function analyzeImage(?string $uploadDir = null, ?string $newFilename = null, ?string $imageContent = null): array
+    {
+        if (!$imageContent && $uploadDir && $newFilename) {
+            $imageFile = $uploadDir . $newFilename;
+            $imageContent = file_get_contents($imageFile);
+        }
+
+        if (!$imageContent) {
+            throw new \InvalidArgumentException('Aucun contenu d\'image fourni');
+        }
+        
+        $imageBase64 = base64_encode($imageContent);
+        
+        $prompt = "Examine cette image de vêtement en détail.\n" .
+            "Identifie tous les vêtements et accessoires présents et renvoie un JSON structuré.\n" .
+            "Pour chaque élément, indique son nom complet (type + caractéristiques + couleur), sa catégorie principale, et si possible sa marque.\n" .
+            "Exemple de format attendu :\n" .
+            "{\n" .
+            "  \"items\": [\n" .
+            "    {\n" .
+            "      \"name\": \"Robe Longue Rouge Brodée\",\n" .
+            "      \"category\": \"robe\",\n" .
+            "      \"color\": \"rouge\",\n" .
+            "      \"brand\": \"Unknown\"\n" .
+            "    },\n" .
+            "    {\n" .
+            "      \"name\": \"Veste en Jean Délavé\",\n" .
+            "      \"category\": \"veste\",\n" .
+            "      \"color\": \"bleu\",\n" .
+            "      \"brand\": \"Unknown\"\n" .
+            "    }\n" .
+            "  ]\n" .
+            "}\n" .
+            "Fournis uniquement le JSON, sans texte additionnel.";
+        
+        $response = $this->httpClient->request('POST', 'https://api.anthropic.com/v1/messages', [
+            'headers' => [
+                'Content-Type' => 'application/json',
+                'x-api-key' => $this->apiKey,
+                'anthropic-version' => '2023-06-01'
+            ],
+            'json' => [
+                'model' => 'claude-3-7-sonnet-20250219',
+                'messages' => [
+                    [
+                        'role' => 'user',
+                        'content' => [
+                            [
+                                'type' => 'text',
+                                'text' => $prompt
+                            ],
+                            [
+                                'type' => 'image',
+                                'source' => [
+                                    'type' => 'base64',
+                                    'media_type' => 'image/jpeg',
+                                    'data' => $imageBase64
+                                ]
+                            ]
+                        ]
+                    ]
+                ],
+                'max_tokens' => 1000
+            ]
+        ]);
+        
+        $responseData = json_decode($response->getContent(), true);
+        $textResponse = $responseData['content'][0]['text'];
+        
+        $detectedItems = $this->extractItemsFromResponse($textResponse);
+        
+        return [
+            'image_path' => $uploadDir ? $uploadDir . $newFilename : null,
+            'detected_items' => $detectedItems
+        ];
+    }
+
+    private function extractItemsFromResponse(string $response): array
+    {
+        if (preg_match('/\{[\s\S]*\}/m', $response, $matches)) {
+            $jsonString = $matches[0];
+            $data = json_decode($jsonString, true);
+            
+            if (json_last_error() === JSON_ERROR_NONE && isset($data['items']) && is_array($data['items'])) {
+                return $data['items'];
+            }
+            
+            if (json_last_error() === JSON_ERROR_NONE) {
+                $items = [];
+                
+                foreach ($data as $key => $value) {
+                    if (is_array($value) && isset($value['name'])) {
+                        $items[] = $value;
+                    } elseif (is_array($value) && (isset($value['Nom']) || isset($value['nom']))) {
+                        $items[] = [
+                            'name' => $value['Nom'] ?? $value['nom'] ?? '',
+                            'category' => $value['Category'] ?? $value['category'] ?? $value['Categorie'] ?? $value['categorie'] ?? '',
+                            'color' => $value['Color'] ?? $value['color'] ?? $value['Couleur'] ?? $value['couleur'] ?? '',
+                            'brand' => $value['Brand'] ?? $value['brand'] ?? $value['Marque'] ?? $value['marque'] ?? 'Unknown'
+                        ];
+                    }
+                }
+                
+                if (!empty($items)) {
+                    return $items;
+                }
+            }
+        }
+        
+        $lines = explode("\n", $response);
+        $items = [];
+        
+        foreach ($lines as $line) {
+            if (preg_match('/[•\-\*]\s*(.*?)(?:\s*:\s*(.*?))?$/i', $line, $matches)) {
+                $fullItem = trim($matches[1]);
+                $description = isset($matches[2]) ? trim($matches[2]) : '';
+                
+                $category = '';
+                $color = '';
+                $name = $fullItem;
+                
+                $categories = ['t-shirt', 'chemise', 'pantalon', 'jean', 'robe', 'veste', 'manteau',
+                              'pull', 'sweatshirt', 'chaussures', 'baskets', 'sneakers', 'accessoire'];
+                
+                foreach ($categories as $cat) {
+                    if (stripos($fullItem, $cat) !== false) {
+                        $category = $cat;
+                        break;
+                    }
+                }
+                
+                $colors = ['noir', 'blanc', 'rouge', 'bleu', 'vert', 'jaune', 'marron', 'gris', 'violet', 'rose', 'orange'];
+                
+                foreach ($colors as $col) {
+                    if (stripos($fullItem, $col) !== false) {
+                        $color = $col;
+                        break;
+                    }
+                }
+                
+                $items[] = [
+                    'name' => $name,
+                    'category' => $category,
+                    'color' => $color,
+                    'brand' => 'Unknown'
+                ];
+            }
+        }
+        
+        return !empty($items) ? $items : $this->fallbackParsing($response);
+    }
+
+    private function fallbackParsing(string $response): array
+    {
+        $items = [];
+        $clothingTypes = [
+            't-shirt' => 'tops', 
+            'chemise' => 'tops', 
+            'pantalon' => 'bottoms', 
+            'jean' => 'bottoms', 
+            'robe' => 'dresses', 
+            'veste' => 'outerwear', 
+            'manteau' => 'outerwear', 
+            'pull' => 'tops', 
+            'sweatshirt' => 'tops', 
+            'chaussures' => 'shoes', 
+            'baskets' => 'shoes', 
+            'sneakers' => 'shoes'
+        ];
+        
+        foreach ($clothingTypes as $type => $category) {
+            if (stripos($response, $type) !== false) {
+                $items[] = [
+                    'name' => ucfirst($type),
+                    'category' => $category,
+                    'color' => 'Unknown',
+                    'brand' => 'Unknown'
+                ];
+            }
+        }
+        
+        return $items;
+    }
+    
     public function getRecommendationsForUser(User $user, array $availableItems, string $occasion = null, string $season = null): array
     {
         $userPreferences = $this->getUserPreferences($user);
@@ -108,10 +292,6 @@ class AIRecommendationService
     
     public function getRecommendations(array $userPreferences, array $availableItems): array
     {
-        if (empty($this->apiKey)) {
-            throw new \Exception('Clé API Claude non configurée');
-        }
-        
         $prompt = $this->buildPrompt($userPreferences, $availableItems);
         
         $response = $this->httpClient->request('POST', 'https://api.anthropic.com/v1/messages', [
@@ -128,17 +308,11 @@ class AIRecommendationService
                 'temperature' => 0.7,
                 'max_tokens' => 2000
             ],
-            'timeout' => 30, 
+            'timeout' => 30
         ]);
         
         $responseContent = $response->getContent();
-        $result = $this->processResponse($responseContent);
-        
-        if (empty($result)) {
-            throw new \Exception('Aucune recommandation n\'a pu être générée par l\'API');
-        }
-        
-        return $result;
+        return $this->processResponse($responseContent);
     }
     
     private function buildPrompt(array $userPreferences, array $availableItems): string
@@ -206,7 +380,6 @@ Réponds UNIQUEMENT en format JSON avec exactement cette structure:
       "title": "Titre de la tenue",
       "description": "Description détaillée incluant l'occasion et pourquoi ces pièces fonctionnent ensemble",
       "items": [ID1, ID2, ID3...],
-      "confidence": 0.85
     },
     ...
   ]
@@ -224,10 +397,6 @@ PROMPT;
                        $data['completion'] ?? 
                        $data['message']['content'] ?? null;
         
-        if (!$jsonContent) {
-            throw new \Exception('Format de réponse Claude non reconnu');
-        }
-        
         if (preg_match('/\{[\s\S]*\}/m', $jsonContent, $matches)) {
             $potentialJson = $matches[0];
             $recommendations = json_decode($potentialJson, true);
@@ -243,6 +412,6 @@ PROMPT;
             return $recommendations['recommendations'];
         }
         
-        throw new \Exception('Impossible de trouver un JSON valide dans la réponse de l\'API');
+        return [];
     }
 }
