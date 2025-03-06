@@ -3,12 +3,13 @@ security:
         Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface: 'auto'
         App\Entity\User:
             algorithm: auto
-
+            
     providers:
         app_user_provider:
             entity:
                 class: App\Entity\User
                 property: email
+    
     firewalls:
         dev:
             pattern: ^/(_(profiler|wdt)|css|images|js)/
@@ -16,19 +17,19 @@ security:
         main:
             lazy: true
             provider: app_user_provider
-            form_login:
-                login_path: app_login  
-                check_path: app_login
+            
+            # Option 1: Si vous utilisez un authentificateur personnalisé
+            custom_authenticator: App\Security\LoginFormAuthenticator
+            
+            # Option 2: Si vous préférez form_login (dans ce cas, supprimez la ligne custom_authenticator)
+            # form_login:
+            #     login_path: app_login
+            #     check_path: app_login
+            
             logout:
                 path: app_logout
-
-            # activate different ways to authenticate
-            # https://symfony.com/doc/current/security.html#the-firewall
-            # https://symfony.com/doc/current/security/impersonating_user.html
-            # switch_user: true
-
-    # Easy way to control access for large sections of your site
-    # Note: Only the *first* access control that matches will be used
+                target: app_home  # Ajoutez cette ligne pour rediriger après déconnexion
+            
     access_control:
         - { path: ^/admin, roles: ROLE_ADMIN }
         - { path: ^/profile, roles: ROLE_USER }

@@ -83,6 +83,8 @@ document.addEventListener('DOMContentLoaded', function() {
     const errorContainer = document.getElementById('error-container');
     const errorMessage = document.getElementById('error-message');
     
+    let userWardrobeItems = [];
+    
     function showForm() {
         generatorForm.classList.remove('hidden');
         loadingIndicator.classList.add('hidden');
@@ -131,6 +133,10 @@ document.addEventListener('DOMContentLoaded', function() {
             loadingIndicator.classList.add('hidden');
             
             if (data.success) {
+                if (data.wardrobeItems) {
+                    userWardrobeItems = data.wardrobeItems;
+                }
+                
                 recommendationsGrid.innerHTML = '';
                 
                 if (!data.recommendations || data.recommendations.length === 0) {
@@ -145,13 +151,40 @@ document.addEventListener('DOMContentLoaded', function() {
                         outfitCard.className = 'bg-gray-50 dark:bg-gray-700 rounded-lg overflow-hidden shadow-md';
                         
                         let itemsHtml = '';
+                        
                         if (outfit.items && outfit.items.length > 0) {
-                            itemsHtml = '<div class="mb-4"><h4 class="text-sm font-medium mb-2 dark:text-white">Éléments de la tenue:</h4><div class="flex flex-wrap gap-2">';
+                            itemsHtml = '<div class="mb-4"><h4 class="text-sm font-medium mb-2 dark:text-white">Éléments de la tenue:</h4>';
+                            
+                            itemsHtml += '<div class="grid grid-cols-2 gap-3">';
+                            
                             outfit.items.forEach(itemId => {
-                                itemsHtml += `<div class="bg-white dark:bg-gray-800 rounded border dark:border-gray-600 px-2 py-1 text-xs">Item #${itemId}</div>`;
+                                const wardrobeItem = data.wardrobeItems ? 
+                                    data.wardrobeItems.find(item => item.id === parseInt(itemId)) : null;
+                                
+                                if (wardrobeItem) {
+                                    itemsHtml += `
+                                        <div class="bg-white dark:bg-gray-800 rounded border dark:border-gray-600 p-2 flex flex-col items-center">
+                                            <div class="w-full h-24 overflow-hidden mb-2 rounded">
+                                                <img src="${wardrobeItem.image_url}" alt="${wardrobeItem.name}" class="w-full h-full object-cover">
+                                            </div>
+                                            <span class="font-medium text-xs">${wardrobeItem.name}</span>
+                                            <span class="text-gray-500 text-xs">(${wardrobeItem.category})</span>
+                                        </div>`;
+                                } else {
+                                    itemsHtml += `
+                                        <div class="bg-white dark:bg-gray-800 rounded border dark:border-gray-600 p-2 flex flex-col items-center">
+                                            <div class="w-full h-24 bg-gray-200 dark:bg-gray-700 mb-2 rounded flex items-center justify-center">
+                                                <span class="text-gray-500 text-xs">Image non disponible</span>
+                                            </div>
+                                            <span class="text-xs">Item #${itemId}</span>
+                                        </div>`;
+                                }
                             });
+                            
                             itemsHtml += '</div></div>';
-                        }outfitCard.innerHTML = `
+                        }
+                        
+                        outfitCard.innerHTML = `
                            <div class="p-4">
                                <h3 class="font-bold text-lg mb-2 dark:text-white">${outfit.title}</h3>
                                <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">${outfit.description}</p>
@@ -188,43 +221,44 @@ document.addEventListener('DOMContentLoaded', function() {
        });
    });
    
-   function saveOutfit(outfitData, button) {
-       button.disabled = true;
-       button.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Sauvegarde en cours...';
-       
-       fetch('{{ path("app_outfit_history_save") }}', {
-           method: 'POST',
-           headers: {
-               'Content-Type': 'application/json',
-               'X-Requested-With': 'XMLHttpRequest'
-           },
-           body: JSON.stringify({
-               title: outfitData.title,
-               description: outfitData.description,
-               style: outfitData.occasion || 'casual',
-               itemIds: outfitData.items || []
-           })
-       })
-       .then(response => response.json())
-       .then(data => {
-           if (data.status === 'success') {
-               button.innerHTML = '<i class="fas fa-check mr-2"></i> Tenue sauvegardée';
-               button.disabled = true;
-               button.classList.add('bg-green-600');
-               button.classList.remove('bg-primary-dark', 'hover:bg-primary');
-           } else {
-               button.innerHTML = '<i class="fas fa-save mr-2"></i> Sauvegarder cette tenue';
-               button.disabled = false;
-               alert('Erreur: ' + (data.message || 'Impossible de sauvegarder la tenue'));
-           }
-       })
-       .catch(error => {
-           console.error('Erreur:', error);
-           button.innerHTML = '<i class="fas fa-save mr-2"></i> Sauvegarder cette tenue';
-           button.disabled = false;
-           alert('Une erreur est survenue lors de la sauvegarde de la tenue');
-       });
-   }
+function saveOutfit(outfitData, button) {
+    button.disabled = true;
+    button.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Sauvegarde en cours...';
+    
+    fetch('{{ path("app_outfit_history_save") }}', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-Requested-With': 'XMLHttpRequest'
+        },
+        body: JSON.stringify({
+            title: outfitData.title,
+            description: outfitData.description,
+            style: outfitData.occasion || 'casual',
+            itemIds: outfitData.items || []
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.status === 'success') {
+            button.innerHTML = '<i class="fas fa-check mr-2"></i> Tenue sauvegardée';
+            
+            setTimeout(function() {
+                window.location.href = '{{ path("app_outfit_history") }}';
+            }, 1000);
+        } else {
+            button.innerHTML = '<i class="fas fa-save mr-2"></i> Sauvegarder cette tenue';
+            button.disabled = false;
+            alert('Erreur: ' + (data.message || 'Impossible de sauvegarder la tenue'));
+        }
+    })
+    .catch(error => {
+        console.error('Erreur:', error);
+        button.innerHTML = '<i class="fas fa-save mr-2"></i> Sauvegarder cette tenue';
+        button.disabled = false;
+        alert('Une erreur est survenue lors de la sauvegarde de la tenue');
+    });
+}
 });
 </script>   
 {% endblock %}

@@ -28,63 +28,77 @@
         </div>
     </div>
     
-    <div class="bg-white p-6 rounded-lg shadow mb-8">
-        <h2 class="text-xl font-semibold mb-4">Évolution des utilisateurs</h2>
-        <canvas id="userGrowthChart" class="w-full h-80"></canvas>
-    </div>
-    
-    <div class="bg-white p-6 rounded-lg shadow">
-        <h2 class="text-xl font-semibold mb-4">Alertes IA</h2>
-        <div class="overflow-x-auto">
-            <table class="w-full table-auto">
-                <thead class="bg-gray-100">
-                    <tr>
-                        <th class="px-4 py-2 text-left">Message</th>
-                        <th class="px-4 py-2 text-left">Date</th>
-                        <th class="px-4 py-2 text-left">Action</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for alert in notifications %}
-                    <tr class="border-b hover:bg-gray-50">
-                        <td class="px-4 py-2">{{ alert.message }}</td>
-                        <td class="px-4 py-2">{{ alert.date|date('d/m/Y H:i') }}</td>
-                        <td class="px-4 py-2">
-                            <button class="px-2 py-1 bg-blue-500 text-white rounded text-sm">Résoudre</button>
-                        </td>
-                    </tr>
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div class="bg-white p-6 rounded-lg shadow">
+            <h2 class="text-xl font-semibold mb-4">Évolution des utilisateurs</h2>
+            <canvas id="userGrowthChart"></canvas>
+        </div>
+        
+        <div class="bg-white p-6 rounded-lg shadow">
+            <h2 class="text-xl font-semibold mb-4">Notifications</h2>
+            <div class="overflow-y-auto max-h-64">
+                <table class="w-full">
+                    <tbody>
+                    {% for notification in notifications %}
+                        <tr class="border-b hover:bg-gray-50">
+                            <td class="px-4 py-2">{{ notification.message }}</td>
+                            <td class="px-4 py-2">{{ notification.date|date('d/m/Y H:i') }}</td>
+                            <td class="px-4 py-2">
+                                <span class="
+                                    {% if notification.status == 'new' %}text-red-500
+                                    {% elseif notification.status == 'pending' %}text-yellow-500
+                                    {% else %}text-green-500
+                                    {% endif %}
+                                ">
+                                    {{ notification.status }}
+                                </span>
+                            </td>
+                        </tr>
                     {% endfor %}
-                </tbody>
-            </table>
+                    </tbody>
+                </table>
+            </div>
         </div>
     </div>
+
+    {% if aiInsights %}
+    <div class="bg-white p-6 rounded-lg shadow mt-6">
+        <h2 class="text-xl font-semibold mb-4">Insights IA</h2>
+        <p>{{ aiInsights|raw }}</p>
+    </div>
+    {% endif %}
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
-    const ctx = document.getElementById('userGrowthChart').getContext('2d');
-    const userGrowthChart = new Chart(ctx, {
-        type: 'line',
-        data: {
-            labels: ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Juin'],
-            datasets: [{
-                label: 'Nouveaux utilisateurs',
-                data: [12, 19, 25, 30, 35, 42],
-                borderColor: 'rgb(59, 130, 246)',
-                backgroundColor: 'rgba(59, 130, 246, 0.1)',
-                tension: 0.1,
-                fill: true
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            scales: {
-                y: {
-                    beginAtZero: true
+document.addEventListener('DOMContentLoaded', function() {
+    // Vérifier si le canvas existe avant de créer le graphique
+    const ctx = document.getElementById('userGrowthChart');
+    if (ctx) {
+        new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Juin'],
+                datasets: [{
+                    label: 'Nouveaux utilisateurs',
+                    data: [12, 19, 25, 30, 35, 42],
+                    borderColor: 'rgb(59, 130, 246)',
+                    backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                    tension: 0.1,
+                    fill: true
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: true
+                    }
                 }
             }
-        }
-    });
+        });
+    }
+});
 </script>
 {% endblock %}

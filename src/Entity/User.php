@@ -1,60 +1,69 @@
 <?php
-
 namespace App\Entity;
 
-use App\Repository\UserRepository;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
-use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
 use Symfony\Component\Security\Core\User\UserInterface;
+use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
 
-#[ORM\Entity(repositoryClass: UserRepository::class)]
-#[ORM\HasLifecycleCallbacks]
+#[ORM\Entity]
+#[UniqueEntity(fields: ['username'], message: 'Ce nom d\'utilisateur est déjà utilisé')]
+#[UniqueEntity(fields: ['email'], message: 'Cet email est déjà utilisé')]
 class User implements UserInterface, PasswordAuthenticatedUserInterface
 {
     #[ORM\Id]
     #[ORM\GeneratedValue]
-    #[ORM\Column]
+    #[ORM\Column(type: 'integer')]
     private ?int $id = null;
 
-    #[ORM\Column(length: 180, unique: true)]
+    #[ORM\Column(type: 'string', length: 50, unique: true)]
+    private ?string $username = null;
+
+    #[ORM\Column(type: 'string', length: 180, unique: true)]
     private ?string $email = null;
 
-    #[ORM\Column]
+    #[ORM\Column(type: 'json')]
     private array $roles = [];
 
-    #[ORM\Column]
-    private ?string $password = null;
-
-    #[ORM\Column(length: 255, nullable: true)]
-    private ?string $nom = 'Utilisateur';
-
-    #[ORM\Column(type: Types::DATETIME_MUTABLE)]
-    private ?\DateTimeInterface $createdAt = null;
-
-    #[ORM\Column(type: Types::DATETIME_MUTABLE)]
-    private ?\DateTimeInterface $updatedAt = null;
-
-    #[ORM\OneToMany(targetEntity: Outfit::class, mappedBy: 'user')]
-    private Collection $outfits;
-
-    #[ORM\OneToMany(targetEntity: UserWardrobe::class, mappedBy: 'user', cascade: ['persist', 'remove'])]
+    #[ORM\Column(type: 'string')]
+    private string $password = '';
+    
+    #[ORM\OneToMany(mappedBy: 'user', targetEntity: UserWardrobe::class, cascade: ['persist', 'remove'])]
     private Collection $wardrobeItems;
-
+    
+    #[ORM\OneToMany(mappedBy: 'user', targetEntity: Outfit::class, cascade: ['persist', 'remove'])]
+    private Collection $outfits;
+    
     public function __construct()
     {
-        $this->outfits = new ArrayCollection();
         $this->wardrobeItems = new ArrayCollection();
-        $this->roles = ['ROLE_USER'];
-        $this->createdAt = new \DateTime();
-        $this->updatedAt = new \DateTime();
+        $this->outfits = new ArrayCollection();
+    }
+
+    public function addRole(string $role): self
+    {
+        if (!in_array($role, $this->roles)) {
+            $this->roles[] = $role;
+        }
+        return $this;
     }
 
     public function getId(): ?int
     {
         return $this->id;
+    }
+
+    public function getUsername(): ?string
+    {
+        return $this->username;
+    }
+
+    public function setUsername(string $username): self
+    {
+        $this->username = $username;
+        return $this;
     }
 
     public function getEmail(): ?string
@@ -68,31 +77,27 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         return $this;
     }
 
-    public function getNom(): ?string
-    {
-        return $this->nom;
-    }
-
-    public function setNom(?string $nom): self
-    {
-        $this->nom = $nom ?? 'Utilisateur';
-        return $this;
-    }
-
-    public function getUserIdentifier(): string
-    {
-        return $this->email;
-    }
-
     public function getRoles(): array
     {
-        return array_unique($this->roles);
+        $roles = $this->roles;
+        $roles[] = 'ROLE_USER';
+
+        if (empty($roles)) {
+            $roles[] = 'ROLE_USER';
+        }
+
+        return array_unique($roles);
     }
 
     public function setRoles(array $roles): self
     {
         $this->roles = $roles;
         return $this;
+    }
+
+    public function isAdmin(): bool
+    {
+        return in_array('ROLE_ADMIN', $this->getRoles());
     }
 
     public function getPassword(): string
@@ -106,53 +111,122 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         return $this;
     }
 
+    public function getSalt(): ?string
+    {
+        return null;
+    }
+
     public function eraseCredentials(): void
     {
     }
 
-    public function getCreatedAt(): ?\DateTimeInterface
+    public function getUserIdentifier(): string
     {
-        return $this->createdAt;
+        return (string) $this->email;
     }
 
-    public function getUpdatedAt(): ?\DateTimeInterface
+    private ?string $plainPassword = null;
+
+    public function getPlainPassword(): ?string
     {
-        return $this->updatedAt;
+        return $this->plainPassword;
     }
 
-    public function getOutfits(): Collection
+    public function setPlainPassword(?string $plainPassword): self
     {
-        return $this->outfits;
+        $this->plainPassword = $plainPassword;
+        return $this;
     }
-
+    
+    public function getNom(): ?string
+    {
+        return $this->username; // Utiliser username comme nom
+    }
+    
+    public function setNom(?string $nom): self
+    {
+        // Ne fait rien, pour maintenir la compatibilité
+        return $this;
+    }
+    
+    /**
+     * @return Collection<int, UserWardrobe>
+     */
     public function getWardrobeItems(): Collection
     {
         return $this->wardrobeItems;
     }
-
-    public function hasItemInWardrobe(ClothingItem $item): bool
+    
+    public function addWardrobeItem(UserWardrobe $wardrobeItem): self
+    {
+        if (!$this->wardrobeItems->contains($wardrobeItem)) {
+            $this->wardrobeItems->add($wardrobeItem);
+            $wardrobeItem->setUser($this);
+        }
+        
+        return $this;
+    }
+    
+    public function removeWardrobeItem(UserWardrobe $wardrobeItem): self
+    {
+        if ($this->wardrobeItems->removeElement($wardrobeItem)) {
+            // set the owning side to null (unless already changed)
+            if ($wardrobeItem->getUser() === $this) {
+                $wardrobeItem->setUser(null);
+            }
+        }
+        
+        return $this;
+    }
+    
+    public function hasItemInWardrobe(ClothingItem $clothingItem): bool
     {
         foreach ($this->wardrobeItems as $wardrobeItem) {
-            if ($wardrobeItem->getClothingItem()->getId() === $item->getId()) {
+            if ($wardrobeItem->getClothingItem() === $clothingItem) {
                 return true;
             }
         }
+        
         return false;
     }
-
-    public function getWardrobeItem(ClothingItem $item): ?UserWardrobe
+    
+    public function getWardrobeItem(ClothingItem $clothingItem): ?UserWardrobe
     {
         foreach ($this->wardrobeItems as $wardrobeItem) {
-            if ($wardrobeItem->getClothingItem()->getId() === $item->getId()) {
+            if ($wardrobeItem->getClothingItem() === $clothingItem) {
                 return $wardrobeItem;
             }
         }
+        
         return null;
     }
-
-    #[ORM\PreUpdate]
-    public function updateTimestamp(): void
+    
+    /**
+     * @return Collection<int, Outfit>
+     */
+    public function getOutfits(): Collection
     {
-        $this->updatedAt = new \DateTime();
+        return $this->outfits;
+    }
+    
+    public function addOutfit(Outfit $outfit): self
+    {
+        if (!$this->outfits->contains($outfit)) {
+            $this->outfits->add($outfit);
+            $outfit->setUser($this);
+        }
+        
+        return $this;
+    }
+    
+    public function removeOutfit(Outfit $outfit): self
+    {
+        if ($this->outfits->removeElement($outfit)) {
+            if ($outfit->getUser() === $this) {
+                $outfit->setUser(null);
+            }
+        }
+        
+        return $this;
     }
 }

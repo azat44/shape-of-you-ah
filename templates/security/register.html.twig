@@ -1,5 +1,7 @@
 {% extends 'base.html.twig' %}
+
 {% block title %}Inscription - Shape of You{% endblock %}
+
 {% block body %}
 <div class="min-h-screen flex items-center justify-center bg-gray-100 py-12 px-4 sm:px-6 lg:px-8">
     <div class="max-w-md w-full space-y-8">
@@ -11,17 +13,26 @@
                 Créez votre compte
             </h2>
         </div>
-  {{ form_start(registrationForm, {
-        'attr': {
-            'class': 'mt-8 space-y-6'
-        }
-    }) }}
+        
+        {% for label, messages in app.flashes %}
+            {% for message in messages %}
+                <div class="my-2 p-2 {% if label == 'success' %}bg-green-100 text-green-800{% else %}bg-red-100 text-red-800{% endif %} rounded">
+                    {{ message }}
+                </div>
+            {% endfor %}
+        {% endfor %}
+        
+        {{ form_start(form, {
+            'attr': {
+                'class': 'mt-8 space-y-6',
+                'method': 'POST'
+            }
+        }) }}
+        
         <div class="rounded-md shadow-sm -space-y-px">
             <div>
-                {{ form_label(registrationForm.nom, 'Nom d\'utilisateur', {
-                    'label_attr': {'class': 'sr-only'}
-                }) }}
-                {{ form_widget(registrationForm.nom, {
+                <label for="{{ form.username.vars.id }}" class="sr-only">Nom d'utilisateur</label>
+                {{ form_widget(form.username, {
                     'attr': {
                         'class': 'appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-t-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm',
                         'placeholder': 'Nom d\'utilisateur'
@@ -29,10 +40,8 @@
                 }) }}
             </div>
             <div>
-                {{ form_label(registrationForm.email, 'Email', {
-                    'label_attr': {'class': 'sr-only'}
-                }) }}
-                {{ form_widget(registrationForm.email, {
+                <label for="{{ form.email.vars.id }}" class="sr-only">Email</label>
+                {{ form_widget(form.email, {
                     'attr': {
                         'class': 'appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm',
                         'placeholder': 'Email'
@@ -40,56 +49,37 @@
                 }) }}
             </div>
             <div>
-                {{ form_label(registrationForm.plainPassword.first, 'Mot de passe', {
-                    'label_attr': {'class': 'sr-only'}
-                }) }}
-                {{ form_widget(registrationForm.plainPassword.first, {
+                <label for="{{ form.plainPassword.vars.id }}" class="sr-only">Mot de passe</label>
+                {{ form_widget(form.plainPassword, {
                     'attr': {
-                        'class': 'appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm',
+                        'class': 'appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-b-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm',
                         'placeholder': 'Mot de passe'
                     }
                 }) }}
             </div>
-            <div>
-                {{ form_label(registrationForm.plainPassword.second, 'Confirmation du mot de passe', {
-                    'label_attr': {'class': 'sr-only'}
-                }) }}
-                {{ form_widget(registrationForm.plainPassword.second, {
-                    'attr': {
-                        'class': 'appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-b-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm',
-                        'placeholder': 'Confirmez le mot de passe'
-                    }
-                }) }}
-            </div>
         </div>
-
-        {% if form_errors(registrationForm) %}
-            <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative" role="alert">
-                {{ form_errors(registrationForm) }}
-            </div>
-        {% endif %}
-
+        
         <div>
-            <button 
-                type="submit" 
+            <button
+                type="submit"
                 class="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
             >
                 S'inscrire
             </button>
         </div>
-
+        
         <div class="text-center">
             <p class="mt-2 text-sm text-gray-600">
-                Déjà un compte ? 
-                <a 
-                    href="{{ path('app_login') }}" 
+                Déjà un compte ?                
+                <a href="{{ path('app_login') }}"
                     class="font-medium text-indigo-600 hover:text-indigo-500"
                 >
                     Connectez-vous
                 </a>
             </p>
         </div>
-    {{ form_end(registrationForm) }}
-</div>
+        
+        {{ form_end(form) }}
+    </div>
 </div>
 {% endblock %}

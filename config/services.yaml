@@ -13,10 +13,15 @@ services:
             - '../src/DependencyInjection/'
             - '../src/Entity/'
             - '../src/Kernel.php'
-    
+
     App\Service\AIRecommendationService:
         arguments:
             $apiKey: '%claude_api_key%'
             $httpClient: '@http_client'
             $logger: '@logger'
-    
+
+    App\Service\AdminAIService:
+        arguments:
+            $httpClient: '@http_client'
+            $logger: '@logger'
+            

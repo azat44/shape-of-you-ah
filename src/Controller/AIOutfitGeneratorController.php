@@ -1,4 +1,4 @@
-<?php
+<?php 
 namespace App\Controller;
 
 use App\Service\AIRecommendationService;
@@ -70,6 +70,7 @@ class AIOutfitGeneratorController extends AbstractController
             return $this->json([
                 'success' => true,
                 'recommendations' => $recommendations,
+                'wardrobeItems' => $wardrobeItems, 
                 'filters' => [
                     'occasion' => $occasion,
                     'season' => $season

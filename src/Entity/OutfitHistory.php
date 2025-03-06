@@ -38,7 +38,7 @@ class OutfitHistory
     #[ORM\Column(type: 'string', length: 50, nullable: true)]
     private ?string $style = null;
     
-    #[ORM\Column(type: 'string', length: 255, nullable: true)]
+    #[ORM\Column(type: 'text', nullable: true)]
     private ?string $description = null;
     
     public function __construct()
@@ -76,6 +76,13 @@ class OutfitHistory
     public function getCreatedAt(): \DateTimeInterface
     {
         return $this->createdAt;
+    }
+    
+    // Ajouter la méthode manquante
+    public function setCreatedAt(\DateTimeInterface $createdAt): self
+    {
+        $this->createdAt = $createdAt;
+        return $this;
     }
     
     public function isShared(): bool

@@ -43,9 +43,10 @@ class SocialController extends AbstractController
             ];
         }
         
-        if (empty($outfits)) {
-            $outfits = $this->getDemoOutfits();
-        }
+        // Pas de tenues démo si aucune tenue n'est partagée
+        // if (empty($outfits)) {
+        //     $outfits = $this->getDemoOutfits();
+        // }
         
         return $this->render('social/feed.html.twig', ['outfits' => $outfits]);
     }
@@ -57,7 +58,9 @@ class SocialController extends AbstractController
         $outfit = $this->outfitHistoryRepository->find($id);
         
         if (!$outfit) {
-            $outfitData = $this->getDemoOutfitById($id);
+            // Au lieu d'afficher une tenue démo, rediriger vers la page sociale
+            return $this->redirectToRoute('app_social_feed');
+            // $outfitData = $this->getDemoOutfitById($id);
         } else {
             $outfitData = [
                 'id' => $outfit->getId(),
@@ -73,12 +76,12 @@ class SocialController extends AbstractController
                 'created_at' => $outfit->getCreatedAt()->format('Y-m-d H:i:s'),
                 'likes' => random_int(5, 50),
             ];
+            
+            return $this->render('social/detail.html.twig', ['outfit' => $outfitData]);
         }
-        
-        return $this->render('social/detail.html.twig', ['outfit' => $outfitData]);
     }
 
-
+    // Méthodes getDemoOutfits et getDemoOutfitById conservées mais non utilisées
     private function getDemoOutfits(): array
     {
         return [
@@ -106,7 +109,6 @@ class SocialController extends AbstractController
             ],
         ];
     }
-
 
     private function getDemoOutfitById(int $id): array
     {

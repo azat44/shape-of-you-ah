@@ -1,4 +1,4 @@
-<?php 
+<?php
 namespace App\Security;
 
 use Symfony\Component\HttpFoundation\RedirectResponse;
@@ -11,7 +11,7 @@ use Symfony\Component\Security\Http\Authenticator\Passport\Passport;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use App\Repository\UserRepository;
 
-class LoginFormAuthenticator extends AbstractLoginFormAuthenticator
+class LoginFormAuthenticator extends AbstractLoginFormAuthenticator 
 {
     private $urlGenerator;
     private $userRepository;
@@ -39,8 +39,12 @@ class LoginFormAuthenticator extends AbstractLoginFormAuthenticator
         );
     }
 
-    public function onAuthenticationSuccess(Request $request, \Symfony\Component\Security\Core\Authentication\Token\TokenInterface $token, string $firewallName): \Symfony\Component\HttpFoundation\Response
-    {
+    public function onAuthenticationSuccess(
+        Request $request, 
+        \Symfony\Component\Security\Core\Authentication\Token\TokenInterface $token, 
+        string $firewallName
+    ): \Symfony\Component\HttpFoundation\Response {
+        // Vous pouvez personnaliser la redirection après connexion
         return new RedirectResponse($this->urlGenerator->generate('app_home'));
     }
 
