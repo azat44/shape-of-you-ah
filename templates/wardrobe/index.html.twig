@@ -143,12 +143,12 @@
             
             <div>
                 <label for="category" class="block text-sm font-medium mb-1 dark:text-gray-300">Catégorie</label>
-                <select id="category" name="category" required class="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary-dark">
-                    <option value="">Choisir une catégorie</option>
-                    {% for category in predefinedCategories %}
-                        <option value="{{ category }}">{{ category }}</option>
-                    {% endfor %}
-                </select>
+    <select id="category" name="category" required class="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary-dark">
+        <option value="">Choisir une catégorie</option>
+        {% for category in predefinedCategories %}
+            <option value="{{ category }}">{{ category }}</option>
+        {% endfor %}
+    </select>
             </div>
             
             <div>
@@ -230,117 +230,142 @@
 
 <script>
     const categoryNavs = document.querySelectorAll('.category-nav');
-    const categoryContents = document.querySelectorAll('.category-content');
-    
-    categoryNavs.forEach(nav => {
-        nav.addEventListener('click', function(e) {
-            e.preventDefault();
-            
-            categoryNavs.forEach(n => n.classList.remove('bg-primary-dark', 'text-white'));
-            categoryNavs.forEach(n => n.classList.add('bg-gray-200', 'dark:bg-gray-700', 'text-gray-700', 'dark:text-white'));
-            this.classList.remove('bg-gray-200', 'dark:bg-gray-700', 'text-gray-700', 'dark:text-white');
-            this.classList.add('bg-primary-dark', 'text-white');
-            
-            const target = this.getAttribute('href').substring(1);
-            categoryContents.forEach(content => content.classList.add('hidden'));
-            document.getElementById(target).classList.remove('hidden');
-        });
+const categoryContents = document.querySelectorAll('.category-content');
+
+categoryNavs.forEach(nav => {
+    nav.addEventListener('click', function(e) {
+        e.preventDefault();
+        
+        categoryNavs.forEach(n => n.classList.remove('bg-primary-dark', 'text-white'));
+        categoryNavs.forEach(n => n.classList.add('bg-gray-200', 'dark:bg-gray-700', 'text-gray-700', 'dark:text-white'));
+        this.classList.remove('bg-gray-200', 'dark:bg-gray-700', 'text-gray-700', 'dark:text-white');
+        this.classList.add('bg-primary-dark', 'text-white');
+        
+        const target = this.getAttribute('href').substring(1);
+        categoryContents.forEach(content => content.classList.add('hidden'));
+        document.getElementById(target).classList.remove('hidden');
     });
-    
-    const addItemModal = document.getElementById('add-item-modal');
-    const addItemBtn = document.getElementById('add-item-btn');
-    const closeModalBtns = document.querySelectorAll('.close-modal');
-    
-    addItemBtn?.addEventListener('click', function() {
-        addItemModal.classList.remove('hidden');
+});
+
+const addItemModal = document.getElementById('add-item-modal');
+const addItemBtn = document.getElementById('add-item-btn');
+const closeModalBtns = document.querySelectorAll('.close-modal');
+
+addItemBtn?.addEventListener('click', function() {
+    addItemModal.classList.remove('hidden');
+});
+
+closeModalBtns.forEach(btn => {
+    btn.addEventListener('click', function() {
+        addItemModal.classList.add('hidden');
+        document.getElementById('add-item-form').reset();
     });
-    
-    closeModalBtns.forEach(btn => {
-        btn.addEventListener('click', function() {
-            addItemModal.classList.add('hidden');
-            document.getElementById('add-item-form').reset();
-        });
-    });
-    
-    addItemModal?.addEventListener('click', function(e) {
-        if (e.target === addItemModal) {
-            addItemModal.classList.add('hidden');
-            document.getElementById('add-item-form').reset();
-        }
-    });
-    
-    const favoriteBtns = document.querySelectorAll('.favorite-btn');
-    
-    favoriteBtns.forEach(btn => {
-        btn.addEventListener('click', function() {
-            const itemId = this.getAttribute('data-id');
-            const isFavorite = this.getAttribute('data-favorite') === 'true';
-            
-            fetch('{{ path('app_wardrobe_toggle_favorite', {'id': 'ITEM_ID'}) }}'.replace('ITEM_ID', itemId), {
-                method: 'POST',
-                headers: {
-                    'X-Requested-With': 'XMLHttpRequest'
+});
+
+addItemModal?.addEventListener('click', function(e) {
+    if (e.target === addItemModal) {
+        addItemModal.classList.add('hidden');
+        document.getElementById('add-item-form').reset();
+    }
+});
+
+const favoriteBtns = document.querySelectorAll('.favorite-btn');
+
+favoriteBtns.forEach(btn => {
+    btn.addEventListener('click', function() {
+        const itemId = this.getAttribute('data-id');
+        const isFavorite = this.getAttribute('data-favorite') === 'true';
+        
+        fetch('{{ path('app_wardrobe_toggle_favorite', {'id': 'ITEM_ID'}) }}'.replace('ITEM_ID', itemId), {
+            method: 'POST',
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                const heartIcon = this.querySelector('i');
+                
+                if (data.isFavorite) {
+                    heartIcon.classList.add('text-red-500');
+                    this.setAttribute('data-favorite', 'true');
+                } else {
+                    heartIcon.classList.remove('text-red-500');
+                    this.setAttribute('data-favorite', 'false');
                 }
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    const heartIcon = this.querySelector('i');
-                    
-                    if (data.isFavorite) {
-                        heartIcon.classList.add('text-red-500');
-                        this.setAttribute('data-favorite', 'true');
-                    } else {
-                        heartIcon.classList.remove('text-red-500');
-                        this.setAttribute('data-favorite', 'false');
-                    }
-                }
-            })
-            .catch(error => console.error('Erreur:', error));
-        });
+            }
+        })
+        .catch(error => console.error('Erreur:', error));
     });
-    
-    const removeItemBtns = document.querySelectorAll('.remove-item-btn');
-    const confirmDeleteModal = document.getElementById('confirm-delete-modal');
-    const cancelDeleteBtn = document.getElementById('cancel-delete');
-    const confirmDeleteBtn = document.getElementById('confirm-delete');
-    let itemToDelete = null;
-    
-    removeItemBtns.forEach(btn => {
-        btn.addEventListener('click', function() {
-            itemToDelete = this.getAttribute('data-id');
-            confirmDeleteModal.classList.remove('hidden');
-        });
+});
+
+const removeItemBtns = document.querySelectorAll('.remove-item-btn');
+const confirmDeleteModal = document.getElementById('confirm-delete-modal');
+const cancelDeleteBtn = document.getElementById('cancel-delete');
+const confirmDeleteBtn = document.getElementById('confirm-delete');
+let itemToDelete = null;
+
+removeItemBtns.forEach(btn => {
+    btn.addEventListener('click', function() {
+        itemToDelete = this.getAttribute('data-id');
+        confirmDeleteModal.classList.remove('hidden');
     });
-    
-    cancelDeleteBtn?.addEventListener('click', function() {
+});
+
+cancelDeleteBtn?.addEventListener('click', function() {
+    confirmDeleteModal.classList.add('hidden');
+    itemToDelete = null;
+});
+
+confirmDeleteBtn?.addEventListener('click', function() {
+    if (itemToDelete) {
+        fetch('{{ path('app_wardrobe_remove_item', {'id': 'ITEM_ID'}) }}'.replace('ITEM_ID', itemToDelete), {
+            method: 'POST',
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                location.reload();
+            }
+        })
+        .catch(error => console.error('Erreur:', error));
+    }
+});
+
+confirmDeleteModal?.addEventListener('click', function(e) {
+    if (e.target === confirmDeleteModal) {
         confirmDeleteModal.classList.add('hidden');
         itemToDelete = null;
-    });
+    }
+});
+
+document.getElementById('add-item-form')?.addEventListener('submit', function(e) {
+    e.preventDefault();
     
-    confirmDeleteBtn?.addEventListener('click', function() {
-        if (itemToDelete) {
-            fetch('{{ path('app_wardrobe_remove_item', {'id': 'ITEM_ID'}) }}'.replace('ITEM_ID', itemToDelete), {
-                method: 'POST',
-                headers: {
-                    'X-Requested-With': 'XMLHttpRequest'
-                }
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    location.reload();
-                }
-            })
-            .catch(error => console.error('Erreur:', error));
-        }
-    });
+    const formData = new FormData(this);
     
-    confirmDeleteModal?.addEventListener('click', function(e) {
-        if (e.target === confirmDeleteModal) {
-            confirmDeleteModal.classList.add('hidden');
-            itemToDelete = null;
+    fetch('{{ path('app_wardrobe_add_custom_item') }}', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            addItemModal.classList.add('hidden');
+            this.reset();
+            window.location.reload();
+        } else {
+            alert(data.error || 'Une erreur est survenue');
         }
+    })
+    .catch(error => {
+        console.error('Erreur:', error);
+        alert('Une erreur est survenue lors de la communication avec le serveur.');
     });
+});
 </script>
 {% endblock %}

@@ -1,0 +1,230 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Générateur de Tenues | Shape of You{% endblock %}
+
+{% block body %}
+<div class="max-w-6xl mx-auto">
+    <div class="bg-white dark:bg-gray-800 shadow-md rounded-lg overflow-hidden p-6">
+        <h1 class="text-2xl font-bold mb-6 dark:text-white">Générateur de Tenues IA</h1>
+        
+        <div class="mb-8">
+            <p class="text-gray-600 dark:text-gray-400 mb-4">Notre IA peut vous suggérer des tenues en fonction de votre garde-robe et de vos préférences.</p>
+        </div>
+        
+        <div id="generator-form" class="space-y-6">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    <label for="occasion" class="block text-sm font-medium mb-1 dark:text-gray-300">Occasion</label>
+                    <select id="occasion" name="occasion" class="w-full px-3 py-2 border rounded-md">
+                        <option value="">Toutes les occasions</option>
+                        <option value="casual">Casual / Décontracté</option>
+                        <option value="formal">Formel / Bureau</option>
+                        <option value="party">Soirée / Fête</option>
+                        <option value="sport">Sport / Activités</option>
+                    </select>
+                </div>
+                
+                <div>
+                    <label for="season" class="block text-sm font-medium mb-1 dark:text-gray-300">Saison</label>
+                    <select id="season" name="season" class="w-full px-3 py-2 border rounded-md">
+                        <option value="">Toutes saisons</option>
+                        <option value="spring">Printemps</option>
+                        <option value="summer">Été</option>
+                        <option value="fall">Automne</option>
+                        <option value="winter">Hiver</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div class="text-center">
+                <button id="generate-btn" type="button" class="px-6 py-3 bg-primary-dark hover:bg-primary text-white rounded-md">
+                    <i class="fas fa-magic mr-2"></i> Générer des tenues
+                </button>
+            </div>
+        </div>
+        
+        <div id="loading-indicator" class="hidden mt-8 text-center py-12">
+            <div class="inline-block animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary-dark mb-4"></div>
+            <p class="text-gray-600 dark:text-gray-400">Génération de tenues en cours...</p>
+        </div>
+        
+        <div id="recommendations-container" class="hidden mt-8">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-xl font-bold dark:text-white">Tenues recommandées</h2>
+                <button id="back-to-form-btn" class="px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-white rounded-md hover:bg-gray-300 dark:hover:bg-gray-600">
+                    <i class="fas fa-chevron-left mr-1"></i> Modifier les filtres
+                </button>
+            </div>
+            <div id="recommendations-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            </div>
+        </div>
+        
+        <div id="error-container" class="hidden mt-8 text-center py-12">
+            <div class="inline-block bg-yellow-100 text-yellow-700 p-4 rounded-lg mb-4">
+                <i class="fas fa-exclamation-triangle text-3xl mb-2"></i>
+                <p id="error-message" class="font-medium"></p>
+            </div>
+            <button id="error-back-btn" class="mt-4 px-4 py-2 bg-primary-dark hover:bg-primary text-white rounded-md">
+                Réessayer
+            </button>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const generateBtn = document.getElementById('generate-btn');
+    const backToFormBtn = document.getElementById('back-to-form-btn');
+    const errorBackBtn = document.getElementById('error-back-btn');
+    const generatorForm = document.getElementById('generator-form');
+    const loadingIndicator = document.getElementById('loading-indicator');
+    const recommendationsContainer = document.getElementById('recommendations-container');
+    const recommendationsGrid = document.getElementById('recommendations-grid');
+    const errorContainer = document.getElementById('error-container');
+    const errorMessage = document.getElementById('error-message');
+    
+    function showForm() {
+        generatorForm.classList.remove('hidden');
+        loadingIndicator.classList.add('hidden');
+        recommendationsContainer.classList.add('hidden');
+        errorContainer.classList.add('hidden');
+    }
+    
+    function showError(message) {
+        errorMessage.textContent = message;
+        generatorForm.classList.add('hidden');
+        loadingIndicator.classList.add('hidden');
+        recommendationsContainer.classList.add('hidden');
+        errorContainer.classList.remove('hidden');
+    }
+    
+    backToFormBtn.addEventListener('click', showForm);
+    errorBackBtn.addEventListener('click', showForm);
+    
+    generateBtn.addEventListener('click', function() {
+        const occasion = document.getElementById('occasion').value;
+        const season = document.getElementById('season').value;
+        
+        generatorForm.classList.add('hidden');
+        loadingIndicator.classList.remove('hidden');
+        recommendationsContainer.classList.add('hidden');
+        errorContainer.classList.add('hidden');
+        
+        fetch('{{ path("app_outfit_generate") }}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest'
+            },
+            body: JSON.stringify({
+                occasion: occasion,
+                season: season
+            })
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Erreur serveur');
+            }
+            return response.json();
+        })
+        .then(data => {
+            loadingIndicator.classList.add('hidden');
+            
+            if (data.success) {
+                recommendationsGrid.innerHTML = '';
+                
+                if (!data.recommendations || data.recommendations.length === 0) {
+                    recommendationsGrid.innerHTML = `
+                        <div class="col-span-full text-center py-8">
+                            <p class="text-gray-600 dark:text-gray-400 mb-4">Aucune tenue n'a pu être générée. Veuillez réessayer avec des filtres différents.</p>
+                        </div>
+                    `;
+                } else {
+                    data.recommendations.forEach(outfit => {
+                        const outfitCard = document.createElement('div');
+                        outfitCard.className = 'bg-gray-50 dark:bg-gray-700 rounded-lg overflow-hidden shadow-md';
+                        
+                        let itemsHtml = '';
+                        if (outfit.items && outfit.items.length > 0) {
+                            itemsHtml = '<div class="mb-4"><h4 class="text-sm font-medium mb-2 dark:text-white">Éléments de la tenue:</h4><div class="flex flex-wrap gap-2">';
+                            outfit.items.forEach(itemId => {
+                                itemsHtml += `<div class="bg-white dark:bg-gray-800 rounded border dark:border-gray-600 px-2 py-1 text-xs">Item #${itemId}</div>`;
+                            });
+                            itemsHtml += '</div></div>';
+                        }outfitCard.innerHTML = `
+                           <div class="p-4">
+                               <h3 class="font-bold text-lg mb-2 dark:text-white">${outfit.title}</h3>
+                               <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">${outfit.description}</p>
+                               ${itemsHtml}
+                               <div class="mt-4">
+                                   <button class="save-outfit-btn w-full px-4 py-2 bg-primary-dark hover:bg-primary text-white rounded-md" 
+                                           data-outfit='${JSON.stringify(outfit)}'>
+                                       <i class="fas fa-save mr-2"></i> Sauvegarder cette tenue
+                                   </button>
+                               </div>
+                           </div>
+                       `;
+                       
+                       recommendationsGrid.appendChild(outfitCard);
+                   });
+                   
+                   document.querySelectorAll('.save-outfit-btn').forEach(btn => {
+                       btn.addEventListener('click', function() {
+                           const outfitData = JSON.parse(this.getAttribute('data-outfit'));
+                           saveOutfit(outfitData, this);
+                       });
+                   });
+               }
+               
+               recommendationsContainer.classList.remove('hidden');
+           } else {
+               showError(data.error || 'Impossible de générer des tenues');
+           }
+       })
+       .catch(error => {
+           loadingIndicator.classList.add('hidden');
+           console.error('Erreur:', error);
+           showError('Une erreur est survenue lors de la génération des tenues. Veuillez réessayer plus tard.');
+       });
+   });
+   
+   function saveOutfit(outfitData, button) {
+       button.disabled = true;
+       button.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Sauvegarde en cours...';
+       
+       fetch('{{ path("app_outfit_history_save") }}', {
+           method: 'POST',
+           headers: {
+               'Content-Type': 'application/json',
+               'X-Requested-With': 'XMLHttpRequest'
+           },
+           body: JSON.stringify({
+               title: outfitData.title,
+               description: outfitData.description,
+               style: outfitData.occasion || 'casual',
+               itemIds: outfitData.items || []
+           })
+       })
+       .then(response => response.json())
+       .then(data => {
+           if (data.status === 'success') {
+               button.innerHTML = '<i class="fas fa-check mr-2"></i> Tenue sauvegardée';
+               button.disabled = true;
+               button.classList.add('bg-green-600');
+               button.classList.remove('bg-primary-dark', 'hover:bg-primary');
+           } else {
+               button.innerHTML = '<i class="fas fa-save mr-2"></i> Sauvegarder cette tenue';
+               button.disabled = false;
+               alert('Erreur: ' + (data.message || 'Impossible de sauvegarder la tenue'));
+           }
+       })
+       .catch(error => {
+           console.error('Erreur:', error);
+           button.innerHTML = '<i class="fas fa-save mr-2"></i> Sauvegarder cette tenue';
+           button.disabled = false;
+           alert('Une erreur est survenue lors de la sauvegarde de la tenue');
+       });
+   }
+});
+</script>   
+{% endblock %}

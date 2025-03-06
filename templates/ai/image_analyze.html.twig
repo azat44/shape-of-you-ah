@@ -1,0 +1,79 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Analyse d'Image | Shape of You{% endblock %}
+
+{% block body %}
+<div class="max-w-6xl mx-auto">
+    <div class="bg-white dark:bg-gray-800 shadow-md rounded-lg overflow-hidden p-6">
+        <h1 class="text-2xl font-bold mb-6 dark:text-white">Analyse de Tenue</h1>
+        
+        <div class="mb-8">
+            <p class="text-gray-600 dark:text-gray-400 mb-4">Téléchargez une photo de votre tenue et notre IA détectera automatiquement les différents éléments.</p>
+        </div>
+        
+        <form action="{{ path('app_ai_image_process') }}" method="post" enctype="multipart/form-data" class="space-y-6">
+            <div class="border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg p-6 text-center" id="dropzone">
+                <i class="fas fa-cloud-upload-alt text-5xl text-gray-400 mb-4"></i>
+                <p class="text-gray-600 dark:text-gray-400 mb-2">Déposez votre image ici ou cliquez pour parcourir</p>
+                <p class="text-sm text-gray-500 dark:text-gray-500">Formats acceptés: JPG, PNG, WEBP - Max 5MB</p>
+                
+                <input type="file" id="image" name="image" accept="image/*" class="hidden" required>
+                <div id="preview" class="mt-4 hidden">
+                    <img id="image-preview" src="" alt="Aperçu" class="max-h-64 mx-auto object-contain">
+                </div>
+            </div>
+            
+            <div class="text-center">
+                <button type="submit" class="px-6 py-3 bg-primary-dark hover:bg-primary text-white rounded-md">
+                    <i class="fas fa-search mr-2"></i> Analyser ma tenue
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    const dropzone = document.getElementById('dropzone');
+    const fileInput = document.getElementById('image');
+    const preview = document.getElementById('preview');
+    const imagePreview = document.getElementById('image-preview');
+    
+    dropzone.addEventListener('click', () => {
+        fileInput.click();
+    });
+    
+    dropzone.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        dropzone.classList.add('border-primary-dark');
+    });
+    
+    dropzone.addEventListener('dragleave', () => {
+        dropzone.classList.remove('border-primary-dark');
+    });
+    
+    dropzone.addEventListener('drop', (e) => {
+        e.preventDefault();
+        dropzone.classList.remove('border-primary-dark');
+        
+        if (e.dataTransfer.files.length) {
+            fileInput.files = e.dataTransfer.files;
+            updatePreview();
+        }
+    });
+    
+    fileInput.addEventListener('change', updatePreview);
+    
+    function updatePreview() {
+        if (fileInput.files && fileInput.files[0]) {
+            const reader = new FileReader();
+            
+            reader.onload = (e) => {
+                imagePreview.src = e.target.result;
+                preview.classList.remove('hidden');
+            };
+            
+            reader.readAsDataURL(fileInput.files[0]);
+        }
+    }
+</script>
+{% endblock %}

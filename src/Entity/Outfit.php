@@ -115,4 +115,10 @@ class Outfit
         $this->style = $style;
         return $this;
     }
+
+    public function setCreatedAt(\DateTimeInterface $createdAt): self
+{
+    $this->createdAt = $createdAt;
+    return $this;
+}
 }

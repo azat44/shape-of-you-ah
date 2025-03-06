@@ -22,6 +22,14 @@
                         <i class="fas fa-history mr-1"></i> Tenues
                     </a>
                     
+                    <a href="{{ path('app_outfit_generator') }}" class="px-3 py-2 rounded-md text-sm font-medium {% if app.request.get('_route') starts with 'app_outfit_generator' %}text-white bg-primary-dark{% else %}text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700{% endif %}">
+                        <i class="fas fa-tshirt mr-1"></i> Générateur de Tenues
+                    </a>
+                    
+                    <a href="{{ path('app_ai_image_analyze') }}" class="px-3 py-2 rounded-md text-sm font-medium {% if app.request.get('_route') starts with 'app_ai_image_analyze' %}text-white bg-primary-dark{% else %}text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700{% endif %}">
+                        <i class="fas fa-camera mr-1"></i> Analyser une Tenue
+                    </a>
+                    
                     <a href="{{ path('app_social_feed') }}" class="px-3 py-2 rounded-md text-sm font-medium {% if app.request.get('_route') starts with 'app_social' %}text-white bg-primary-dark{% else %}text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700{% endif %}">
                         <i class="fas fa-users mr-1"></i> Social
                     </a>
@@ -90,6 +98,14 @@
                     
                     <a href="{{ path('app_outfit_history') }}" class="px-3 py-2 rounded-md text-sm font-medium {% if app.request.get('_route') starts with 'app_outfit' %}text-white bg-primary-dark{% else %}text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700{% endif %}">
                         <i class="fas fa-history mr-1"></i> Tenues
+                    </a>
+                    
+                    <a href="{{ path('app_outfit_generator') }}" class="px-3 py-2 rounded-md text-sm font-medium {% if app.request.get('_route') starts with 'app_outfit_generator' %}text-white bg-primary-dark{% else %}text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700{% endif %}">
+                        <i class="fas fa-tshirt mr-1"></i> Générateur de Tenues
+                    </a>
+                    
+                    <a href="{{ path('app_ai_image_analyze') }}" class="px-3 py-2 rounded-md text-sm font-medium {% if app.request.get('_route') starts with 'app_ai_image_analyze' %}text-white bg-primary-dark{% else %}text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700{% endif %}">
+                        <i class="fas fa-camera mr-1"></i> Analyser une Tenue
                     </a>
                     
                     <a href="{{ path('app_social_feed') }}" class="px-3 py-2 rounded-md text-sm font-medium {% if app.request.get('_route') starts with 'app_social' %}text-white bg-primary-dark{% else %}text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700{% endif %}">

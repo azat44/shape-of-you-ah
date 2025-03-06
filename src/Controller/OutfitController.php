@@ -14,42 +14,33 @@ use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 
-/**
- * Contrôleur pour la gestion des tenues
- * Regroupe les fonctionnalités de OutfitController et OutfitSearchController
- */
 #[Route('/outfits')]
 #[IsGranted('ROLE_USER')]
 class OutfitController extends AbstractController 
 {
-    private EntityManagerInterface $entityManager;
-    private OutfitRepository $outfitRepository;
-    private OutfitHistoryRepository $outfitHistoryRepository;
-    private ClothingItemRepository $clothingItemRepository;
-
     public function __construct(
-        EntityManagerInterface $entityManager,
-        OutfitRepository $outfitRepository,
-        OutfitHistoryRepository $outfitHistoryRepository,
-        ClothingItemRepository $clothingItemRepository
-    ) {
-        $this->entityManager = $entityManager;
-        $this->outfitRepository = $outfitRepository;
-        $this->outfitHistoryRepository = $outfitHistoryRepository;
-        $this->clothingItemRepository = $clothingItemRepository;
-    }
+        private EntityManagerInterface $entityManager,
+        private OutfitRepository $outfitRepository,
+        private OutfitHistoryRepository $outfitHistoryRepository,
+        private ClothingItemRepository $clothingItemRepository
+    ) {}
 
-    /**
-     * Affiche l'historique des tenues
-     */
     #[Route('/history', name: 'app_outfit_history', methods: ['GET'])]
     public function showOutfitHistory(): Response 
     {
         $user = $this->getUser();
+        
+        // Récupérer les vêtements de la garde-robe et les tenues
+        $userClothingItems = [];
+        foreach ($user->getWardrobeItems() as $item) {
+            $userClothingItems[] = $item->getClothingItem();
+        }
+        
         $outfitHistoryItems = $this->outfitHistoryRepository->findByUser($user);
         $outfitItems = $this->outfitRepository->findBy(['user' => $user], ['createdAt' => 'DESC']);
         $combinedOutfits = [];
         
+        // Ajouter les tenues de l'historique
         foreach ($outfitHistoryItems as $outfit) {
             $combinedOutfits[] = [
                 'id' => $outfit->getId(),
@@ -57,96 +48,88 @@ class OutfitController extends AbstractController
                 'title' => $outfit->getTitle() ?: 'Tenue sans titre',
                 'description' => $outfit->getDescription(),
                 'created_at' => $outfit->getCreatedAt()->format('Y-m-d H:i:s'),
-                'style' => $outfit->getStyle() ?: 'Urban Casual Weekend',
-                'image_url' => $outfit->getImageUrl() ?: '/images/jean-bleu.webp',
-                'price' => $outfit->getPrice()
+                'style' => $outfit->getStyle() ?: 'Casual',
+                'image_url' => $outfit->getImageUrl() ?: '/images/placeholder.jpg',
+                'price' => $outfit->getPrice(),
+                'is_shared' => $outfit->isShared()
             ];
         }
         
+        // Ajouter les tenues régulières
         foreach ($outfitItems as $outfit) {
             $imageUrl = null;
             if ($outfit->getClothingItems()->count() > 0) {
-                $firstItem = $outfit->getClothingItems()->first();
-                if (method_exists($firstItem, 'getImageUrl')) {
-                    $imageUrl = $firstItem->getImageUrl();
-                }
+                $imageUrl = $outfit->getClothingItems()->first()?->getImageUrl();
             }
             
             $combinedOutfits[] = [
                 'id' => $outfit->getId(),
                 'type' => 'outfit',
                 'title' => $outfit->getTitle() ?: 'Tenue sans titre',
-                'description' => $outfit->getDescription() ?: 'Description de la tenue...',
+                'description' => $outfit->getDescription() ?: 'Description...',
                 'created_at' => $outfit->getCreatedAt()->format('Y-m-d H:i:s'),
-                'style' => $outfit->getStyle() ?: 'Urban Casual Weekend',
-                'image_url' => $imageUrl ?: '/images/jean-bleu.webp',
+                'style' => $outfit->getStyle() ?: 'Casual',
+                'image_url' => $imageUrl ?: '/images/placeholder.jpg',
                 'price' => null 
             ];
         }
         
-        usort($combinedOutfits, function($a, $b) {
-            return strtotime($b['created_at']) - strtotime($a['created_at']);
-        });
+        usort($combinedOutfits, fn($a, $b) => strtotime($b['created_at']) - strtotime($a['created_at']));
         
         return $this->render('outfit/history.html.twig', [
-            'outfits' => $combinedOutfits
+            'outfits' => $combinedOutfits,
+            'userClothingItems' => $userClothingItems
         ]);
     }
 
-    /**
-     * Affiche les détails d'une tenue de l'historique
-     */
     #[Route('/history/{id}', name: 'app_outfit_history_details', methods: ['GET'])]
     public function showOutfitHistoryDetails(int $id): Response 
     {
         $user = $this->getUser();
         $outfit = $this->outfitHistoryRepository->findOneBy(['id' => $id, 'user' => $user]);
         
-        if (!$outfit || $id <= 3) {
-            $demoData = [
-                1 => [
-                    'id' => 1,
-                    'title' => 'Urban Casual Weekend',
-                    'description' => 'Pour vos journées décontractées, cette tenue casual offre un parfait équilibre entre confort et style...',
-                    'created_at' => '2023-04-03 17:01:00',
-                    'style' => 'Urban Casual Weekend',
-                    'image_url' => '/images/jean-bleu.webp',
-                    'items' => [
-                        ['name' => 'Sweat à capuche gris', 'image_url' => '/images/sweat-capuche-gris.webp'],
-                        ['name' => 'Jean bleu', 'image_url' => '/images/jean-bleu.webp'],
-                        ['name' => 'Baskets noires', 'image_url' => '/images/basket-noir.jpg']
-                    ]
-                ],
+        if (!$outfit && $id <= 3) {
+            // Utiliser des données démo pour les ID 1-3
+            $demoItems = [
+                1 => ['Urban Casual Weekend', '/images/jean-bleu.webp', 'casual'],
+                2 => ['Tenue de soirée', '/images/veste-velour.webp', 'soirée'],
+                3 => ['Sport & Détente', '/images/tshirt-technique.jpg', 'sport']
             ];
             
             return $this->render('outfit/details.html.twig', [
-                'outfit' => $demoData[$id] ?? $demoData[1]
+                'outfit' => [
+                    'id' => $id,
+                    'title' => $demoItems[$id][0],
+                    'description' => 'Description de la tenue démo...',
+                    'created_at' => '2023-01-01 12:00:00',
+                    'style' => $demoItems[$id][2],
+                    'image_url' => $demoItems[$id][1],
+                    'items' => [
+                        ['name' => 'Item 1', 'image_url' => '/images/placeholder.jpg'],
+                        ['name' => 'Item 2', 'image_url' => '/images/placeholder.jpg']
+                    ]
+                ]
             ]);
+        } elseif (!$outfit) {
+            throw $this->createNotFoundException('Tenue non trouvée');
         }
         
-        // Préparer les données de la tenue
-        $outfitArray = [
-            'id' => $outfit->getId(),
-            'type' => 'history',
-            'title' => $outfit->getTitle() ?: 'Tenue sans titre',
-            'description' => $outfit->getDescription(),
-            'created_at' => $outfit->getCreatedAt()->format('Y-m-d H:i:s'),
-            'style' => $outfit->getStyle() ?: 'Urban Casual Weekend',
-            'image_url' => $outfit->getImageUrl() ?: '/images/jean-bleu.webp',
-            'price' => $outfit->getPrice(),
-            'items' => $outfit->getOutfitItems() ?: [
-                ['name' => 'Élément par défaut', 'image_url' => '/images/placeholder.jpg']
-            ]
-        ];
-        
         return $this->render('outfit/details.html.twig', [
-            'outfit' => $outfitArray
+            'outfit' => [
+                'id' => $outfit->getId(),
+                'type' => 'history',
+                'title' => $outfit->getTitle() ?: 'Tenue sans titre',
+                'description' => $outfit->getDescription(),
+                'created_at' => $outfit->getCreatedAt()->format('Y-m-d H:i:s'),
+                'style' => $outfit->getStyle() ?: 'Casual',
+                'image_url' => $outfit->getImageUrl() ?: '/images/placeholder.jpg',
+                'price' => $outfit->getPrice(),
+                'is_shared' => $outfit->isShared(),
+                'items' => $outfit->getOutfitItems() ?: [['name' => 'Item par défaut', 'image_url' => '/images/placeholder.jpg']]
+            ]
         ]);
     }
 
-    /**
-     * Affiche les détails d'une tenue
-     */
     #[Route('/outfit/{id}', name: 'app_outfit_details', methods: ['GET'])]
     public function showOutfitDetails(int $id): Response 
     {
@@ -162,135 +145,87 @@ class OutfitController extends AbstractController
             $items[] = [
                 'id' => $item->getId(),
                 'name' => $item->getName(),
-                'category' => method_exists($item, 'getCategory') ? $item->getCategory()->getName() : null,
-                'image_url' => method_exists($item, 'getImageUrl') ? $item->getImageUrl() : null,
+                'category' => $item->getCategory()->getName(),
+                'image_url' => $item->getImageUrl(),
+                'price' => $item->getPrice()
             ];
         }
         
-        $outfitArray = [
-            'id' => $outfit->getId(),
-            'type' => 'outfit',
-            'title' => $outfit->getTitle() ?: 'Tenue sans titre',
-            'description' => $outfit->getDescription(),
-            'created_at' => $outfit->getCreatedAt()->format('Y-m-d H:i:s'),
-            'style' => $outfit->getStyle() ?: 'Urban Casual Weekend',
-            'items' => $items,
-            'price' => null 
-        ];
+        $totalPrice = array_sum(array_filter(array_map(fn($item) => $item['price'] ?: 0, $items)));
+        
+        $imageUrl = '/images/placeholder.jpg';  
+        if (count($items) > 0 && isset($items[0]['image_url'])) {
+            $imageUrl = $items[0]['image_url'];
+        }
         
         return $this->render('outfit/details.html.twig', [
-            'outfit' => $outfitArray
-        ]);
-    }
-
-    /**
-     * Liste des tenues partagées
-     */
-    #[Route('/social', name: 'app_outfit_social', methods: ['GET'])]
-    public function showSharedOutfits(): Response 
-    {
-        $sharedOutfits = $this->outfitHistoryRepository->findSharedOutfits();
-        return $this->render('social.html.twig', [
-            'outfits' => $sharedOutfits
-        ]);
-    }
-
-    /**
-     * Partager une tenue
-     */
-    #[Route('/{id}/share', name: 'app_outfit_share', methods: ['POST'])]
-    public function shareOutfit(OutfitHistory $outfit): JsonResponse 
-    {
-        if ($outfit->getUser() !== $this->getUser()) {
-            return $this->json(['status' => 'error', 'message' => 'Vous ne pouvez pas partager cette tenue'], 403);
-        }
-        $outfit->setShared(true);
-        $this->entityManager->flush();
-        return $this->json([
-            'status' => 'success',
-            'message' => 'Tenue partagée avec succès',
             'outfit' => [
                 'id' => $outfit->getId(),
-                'is_shared' => $outfit->isShared()
+                'type' => 'outfit',
+                'title' => $outfit->getTitle() ?: 'Tenue sans titre',
+                'description' => $outfit->getDescription(),
+                'created_at' => $outfit->getCreatedAt()->format('Y-m-d H:i:s'),
+                'style' => $outfit->getStyle() ?: 'Casual',
+                'items' => $items,
+                'price' => $totalPrice,
+                'image_url' => $imageUrl 
             ]
         ]);
     }
 
-    /**
-     * Sauvegarder une tenue dans l'historique
-     */
-    #[Route('/history/save', name: 'app_outfit_history_save', methods: ['POST'])]
-    public function saveOutfitHistory(Request $request): JsonResponse 
+    #[Route('/social', name: 'app_outfit_social', methods: ['GET'])]
+    public function showSharedOutfits(): Response 
     {
-        $user = $this->getUser();
-        $data = json_decode($request->getContent(), true);
-        $outfitHistory = new OutfitHistory();
-        $outfitHistory->setUser($user);
-        $outfitHistory->setCreatedAt(new \DateTime());
-        $outfitItems = $data['outfitItems'] ?? $data['items'] ?? [];
-        $outfitHistory->setOutfitItems($outfitItems);
+        $sharedOutfits = $this->outfitHistoryRepository->findSharedOutfits();
+        return $this->render('social.html.twig', ['outfits' => $sharedOutfits]);
+    }
+
+    #[Route('/{id}/share', name: 'app_outfit_share', methods: ['POST'])]
+    public function shareOutfit(OutfitHistory $outfit): JsonResponse 
+    {
+        if ($outfit->getUser() !== $this->getUser()) {
+            return $this->json(['status' => 'error', 'message' => 'Action non autorisée'], 403);
+        }
         
-        if (isset($data['description'])) {
-            $outfitHistory->setDescription($data['description']);
-        }
-        if (isset($data['image_url'])) {
-            $outfitHistory->setImageUrl($data['image_url']);
-        }
-        if (isset($data['price'])) {
-            $outfitHistory->setPrice($data['price']);
-        }
-        if (isset($data['style'])) {
-            $outfitHistory->setStyle($data['style']);
-        }
-        if (isset($data['title'])) {
-            $outfitHistory->setTitle($data['title']);
-        }
-    
-        $this->entityManager->persist($outfitHistory);
+        $outfit->setIsShared(!$outfit->isShared());
         $this->entityManager->flush();
+        
         return $this->json([
             'status' => 'success',
-            'message' => 'Tenue ajoutée à l\'historique',
-            'outfit_id' => $outfitHistory->getId()
+            'message' => 'Statut de partage mis à jour',
+            'outfit' => ['id' => $outfit->getId(), 'is_shared' => $outfit->isShared()]
         ]);
     }
-    
-    /**
-     * Enregistrer une nouvelle tenue
-     */
+
     #[Route('/save', name: 'app_outfit_save', methods: ['POST'])]
     public function saveOutfit(Request $request): JsonResponse
     {
         $user = $this->getUser();
         $data = json_decode($request->getContent(), true);
 
-        if (!isset($data['title']) || !isset($data['itemIds']) || !is_array($data['itemIds']) || empty($data['itemIds'])) {
-            return $this->json(['error' => 'Données invalides', 'received' => $data], Response::HTTP_BAD_REQUEST);
+        if (!isset($data['title'], $data['itemIds']) || !is_array($data['itemIds']) || empty($data['itemIds'])) {
+            return $this->json(['error' => 'Données incomplètes'], Response::HTTP_BAD_REQUEST);
         }
 
-        $title = $data['title'];
-        $itemIds = $data['itemIds'];
-        $description = $data['description'] ?? '';
-        $style = $data['style'] ?? 'casual';
-
         $outfit = new Outfit();
-        $outfit->setTitle($title);
+        $outfit->setTitle($data['title']);
         $outfit->setUser($user);
         $outfit->setCreatedAt(new \DateTime());
-        $outfit->setDescription($description);
-        $outfit->setStyle($style);
+        $outfit->setDescription($data['description'] ?? '');
+        $outfit->setStyle($data['style'] ?? 'casual');
         
+        // Ajouter les vêtements de la garde-robe
         $validItems = [];
-        foreach ($itemIds as $itemId) {
+        foreach ($data['itemIds'] as $itemId) {
             $item = $this->clothingItemRepository->find($itemId);
-            if ($item) {
+            if ($item && $user->hasItemInWardrobe($item)) {
                 $outfit->addClothingItem($item);
                 $validItems[] = $item;
             }
         }
 
         if (empty($validItems)) {
-            return $this->json(['error' => 'Aucun article valide trouvé', 'itemIds' => $itemIds], Response::HTTP_BAD_REQUEST);
+            return $this->json(['error' => 'Aucun article valide trouvé'], Response::HTTP_BAD_REQUEST);
         }
 
         $this->entityManager->persist($outfit);
@@ -298,24 +233,62 @@ class OutfitController extends AbstractController
 
         return $this->json([
             'success' => true,
-            'message' => 'Tenue enregistrée avec succès',
+            'message' => 'Tenue enregistrée',
             'outfitId' => $outfit->getId(),
             'itemCount' => count($validItems)
         ], Response::HTTP_CREATED);
     }
     
-    /**
-     * Supprimer une tenue
-     */
+    #[Route('/history/save', name: 'app_outfit_history_save', methods: ['POST'])]
+    public function saveOutfitHistory(Request $request): JsonResponse 
+    {
+        $user = $this->getUser();
+        $data = json_decode($request->getContent(), true);
+        
+        $outfitHistory = new OutfitHistory();
+        $outfitHistory->setUser($user);
+        $outfitHistory->setCreatedAt(new \DateTime());
+        
+        if (isset($data['itemIds']) && is_array($data['itemIds'])) {
+            $itemsData = [];
+            foreach ($data['itemIds'] as $itemId) {
+                $item = $this->clothingItemRepository->find($itemId);
+                if ($item && $user->hasItemInWardrobe($item)) {
+                    $itemsData[] = [
+                        'id' => $item->getId(),
+                        'name' => $item->getName(),
+                        'category' => $item->getCategory()->getName(),
+                        'image_url' => $item->getImageUrl()
+                    ];
+                }
+            }
+            $outfitHistory->setOutfitItems($itemsData);
+        } else {
+            $outfitHistory->setOutfitItems($data['items'] ?? []);
+        }
+        
+        // Autres données
+        if (isset($data['title'])) $outfitHistory->setTitle($data['title']);
+        if (isset($data['description'])) $outfitHistory->setDescription($data['description']);
+        if (isset($data['style'])) $outfitHistory->setStyle($data['style']);
+        if (isset($data['image_url'])) $outfitHistory->setImageUrl($data['image_url']);
+        if (isset($data['price'])) $outfitHistory->setPrice($data['price']);
+    
+        $this->entityManager->persist($outfitHistory);
+        $this->entityManager->flush();
+        
+        return $this->json([
+            'status' => 'success',
+            'message' => 'Tenue sauvegardée',
+            'outfit_id' => $outfitHistory->getId()
+        ]);
+    }
+    
     #[Route('/delete/{id}', name: 'app_outfit_delete', methods: ['DELETE'])]
     public function deleteOutfit(int $id): JsonResponse
     {
         $user = $this->getUser();
-        
-        $outfit = $this->outfitRepository->findOneBy([
-            'id' => $id,
-            'user' => $user
-        ]);
+        $outfit = $this->outfitRepository->findOneBy(['id' => $id, 'user' => $user]);
         
         if (!$outfit) {
             return $this->json(['error' => 'Tenue non trouvée'], Response::HTTP_NOT_FOUND);
@@ -324,15 +297,9 @@ class OutfitController extends AbstractController
         $this->entityManager->remove($outfit);
         $this->entityManager->flush();
         
-        return $this->json([
-            'success' => true,
-            'message' => 'Tenue supprimée avec succès'
-        ]);
+        return $this->json(['success' => true, 'message' => 'Tenue supprimée']);
     }
     
-    /**
-     * Recherche de tenues avec filtres
-     */
     #[Route('/search', name: 'app_outfit_search', methods: ['GET'])]
     public function search(Request $request): Response 
     {
@@ -342,53 +309,33 @@ class OutfitController extends AbstractController
         $period = $request->query->get('period');
         $shared = $request->query->get('shared');
         
+        // Déterminer la date limite selon la période
         $fromDate = null;
         if ($period) {
-            $today = new \DateTime();
-            $fromDate = clone $today;
-            
-            switch ($period) {
-                case 'week': $fromDate->modify('-1 week'); break;
-                case 'month': $fromDate->modify('-1 month'); break;
-                case 'year': $fromDate->modify('-1 year'); break;
-            }
+            $fromDate = new \DateTime();
+            $fromDate->modify('-1 ' . ($period === 'week' ? 'week' : ($period === 'month' ? 'month' : 'year')));
         }
         
+        // Récupérer les tenues
         $outfitHistoryItems = $this->outfitHistoryRepository->findByUser($user);
         $outfitItems = $this->outfitRepository->findBy(['user' => $user], ['createdAt' => 'DESC']);
-        
-        if ($shared === 'shared') {
-            $outfitHistoryItems = array_filter($outfitHistoryItems, function($outfit) {
-                return $outfit->isShared();
-            });
-            $outfitItems = []; 
-        }
-        elseif ($shared === 'personal') {
-            $outfitHistoryItems = array_filter($outfitHistoryItems, function($outfit) {
-                return !$outfit->isShared();
-            });
-        }
-        
         $combinedOutfits = [];
         
-        // Filtrer les tenues de l'historique
+        // Filtrer par type de partage
+        if ($shared === 'shared') {
+            $outfitHistoryItems = array_filter($outfitHistoryItems, fn($o) => $o->isShared());
+            $outfitItems = []; 
+        } elseif ($shared === 'personal') {
+            $outfitHistoryItems = array_filter($outfitHistoryItems, fn($o) => !$o->isShared());
+        }
+        
+        // Traiter les tenues historiques
         foreach ($outfitHistoryItems as $outfit) {
-            if ($fromDate && $outfit->getCreatedAt() < $fromDate) {
+            // Filtrer par date, style et terme de recherche
+            if (($fromDate && $outfit->getCreatedAt() < $fromDate) ||
+                ($style && $outfit->getStyle() !== $style) ||
+                ($searchQuery && !$this->matchesSearch($outfit, $searchQuery))) {
                 continue;
-            }
-            
-            if ($style && $outfit->getStyle() !== $style) {
-                continue;
-            }
-            
-            if ($searchQuery) {
-                $title = strtolower($outfit->getTitle() ?? '');
-                $description = strtolower($outfit->getDescription() ?? '');
-                $searchTerm = strtolower($searchQuery);
-                
-                if (strpos($title, $searchTerm) === false && strpos($description, $searchTerm) === false) {
-                    continue;
-                }
             }
             
             $combinedOutfits[] = [
@@ -404,32 +351,13 @@ class OutfitController extends AbstractController
             ];
         }
         
-        // Filtrer les tenues régulières
+        // Traiter les tenues régulières
         foreach ($outfitItems as $outfit) {
-            if ($fromDate && $outfit->getCreatedAt() < $fromDate) {
+            // Filtrer par date, style et terme de recherche
+            if (($fromDate && $outfit->getCreatedAt() < $fromDate) ||
+                ($style && $outfit->getStyle() !== $style) ||
+                ($searchQuery && !$this->matchesSearch($outfit, $searchQuery))) {
                 continue;
-            }
-            
-            if ($style && $outfit->getStyle() !== $style) {
-                continue;
-            }
-            
-            if ($searchQuery) {
-                $title = strtolower($outfit->getTitle() ?? '');
-                $description = strtolower($outfit->getDescription() ?? '');
-                $searchTerm = strtolower($searchQuery);
-                
-                if (strpos($title, $searchTerm) === false && strpos($description, $searchTerm) === false) {
-                    continue;
-                }
-            }
-            
-            $imageUrl = null;
-            if ($outfit->getClothingItems()->count() > 0) {
-                $firstItem = $outfit->getClothingItems()->first();
-                if (method_exists($firstItem, 'getImageUrl')) {
-                    $imageUrl = $firstItem->getImageUrl();
-                }
             }
             
             $combinedOutfits[] = [
@@ -439,24 +367,27 @@ class OutfitController extends AbstractController
                 'description' => $outfit->getDescription(),
                 'created_at' => $outfit->getCreatedAt()->format('Y-m-d H:i:s'),
                 'style' => $outfit->getStyle(),
-                'image_url' => $imageUrl,
+                'image_url' => $outfit->getClothingItems()->first()?->getImageUrl(),
                 'price' => null,
                 'is_shared' => false
             ];
         }
         
-        usort($combinedOutfits, function($a, $b) {
-            return strtotime($b['created_at']) - strtotime($a['created_at']);
-        });
+        usort($combinedOutfits, fn($a, $b) => strtotime($b['created_at']) - strtotime($a['created_at']));
         
         return $this->render('outfit/search.html.twig', [
             'outfits' => $combinedOutfits,
             'searchQuery' => $searchQuery,
-            'filters' => [
-                'style' => $style,
-                'period' => $period,
-                'shared' => $shared
-            ]
+            'filters' => ['style' => $style, 'period' => $period, 'shared' => $shared]
         ]);
+    }
+    
+    private function matchesSearch($outfit, string $query): bool
+    {
+        $title = strtolower($outfit->getTitle() ?? '');
+        $desc = strtolower($outfit->getDescription() ?? '');
+        $term = strtolower($query);
+        
+        return strpos($title, $term) !== false || strpos($desc, $term) !== false;
     }
 }

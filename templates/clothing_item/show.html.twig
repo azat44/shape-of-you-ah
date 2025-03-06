@@ -1,0 +1,70 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Détail du vêtement - {{ clothing_item.name }}{% endblock %}
+
+{% block body %}
+<div class="container mx-auto px-4 py-8">
+    <div class="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6">
+        <div class="flex flex-col md:flex-row">
+            <div class="md:w-1/2 mb-6 md:mb-0 md:pr-6">
+                <img src="{{ clothing_item.imageUrl }}" alt="{{ clothing_item.name }}" class="w-full h-auto object-cover rounded-lg">
+            </div>
+            <div class="md:w-1/2">
+                <h1 class="text-2xl font-bold mb-4">{{ clothing_item.name }}</h1>
+                
+                {% if clothing_item.description %}
+                    <p class="mb-4 text-gray-700 dark:text-gray-300">{{ clothing_item.description }}</p>
+                {% endif %}
+                
+                <div class="grid grid-cols-2 gap-4 mb-6">
+                    <div>
+                        <h3 class="font-semibold">Catégorie</h3>
+                        <p>{{ clothing_item.category.name }}</p>
+                    </div>
+                    
+                    {% if clothing_item.color %}
+                    <div>
+                        <h3 class="font-semibold">Couleur</h3>
+                        <p>{{ clothing_item.color|capitalize }}</p>
+                    </div>
+                    {% endif %}
+                    
+                    {% if clothing_item.style %}
+                    <div>
+                        <h3 class="font-semibold">Style</h3>
+                        <p>{{ clothing_item.style|capitalize }}</p>
+                    </div>
+                    {% endif %}
+                    
+                    {% if clothing_item.price %}
+                    <div>
+                        <h3 class="font-semibold">Prix</h3>
+                        <p>{{ clothing_item.price }} €</p>
+                    </div>
+                    {% endif %}
+                </div>
+                
+                {% if clothing_item.partnerLink %}
+                <div class="mt-6">
+                    <a href="{{ clothing_item.partnerLink }}" target="_blank" class="inline-block px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors">
+                        Acheter chez le partenaire
+                    </a>
+                </div>
+                {% endif %}
+                
+                <div class="mt-6 flex space-x-4">
+                    <a href="{{ path('app_wardrobe') }}" class="inline-block px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-100 transition-colors">
+                        Retour à la garde-robe
+                    </a>
+                    
+                    {% if is_granted('ROLE_ADMIN') %}
+                    <a href="{{ path('app_clothing_item_edit', {'id': clothing_item.id}) }}" class="inline-block px-4 py-2 bg-yellow-500 hover:bg-yellow-600 text-white rounded-lg transition-colors">
+                        Modifier
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

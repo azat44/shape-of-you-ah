@@ -1,0 +1,202 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Flux social | Shape of You{% endblock %}
+
+{% block body %}
+<div class="max-w-4xl mx-auto">
+    <div class="bg-white dark:bg-gray-800 shadow-md rounded-lg overflow-hidden">
+        <div class="p-6">
+            <div class="flex flex-col md:flex-row md:items-center md:justify-between mb-6">
+                <h1 class="text-2xl font-bold mb-2 md:mb-0 dark:text-white">Découvrez les tenues partagées</h1>
+                
+                <div class="flex space-x-2">
+                    <button id="filter-btn" class="inline-flex items-center px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-white rounded-md hover:bg-gray-300 dark:hover:bg-gray-600">
+                        <i class="fas fa-filter mr-2"></i> Filtrer
+                    </button>
+                </div>
+            </div>
+            
+            {% if outfits|length > 0 %}
+                <div id="filter-panel" class="hidden mb-6 bg-gray-50 dark:bg-gray-700 p-4 rounded-lg">
+                    <form id="filter-form" class="space-y-4">
+                        <div class="flex flex-col md:flex-row md:space-x-4">
+                            <div class="md:w-1/3 mb-4 md:mb-0">
+                                <label for="style-filter" class="block text-sm font-medium mb-1 dark:text-gray-300">Style</label>
+                                <select id="style-filter" name="style" class="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary-dark">
+                                    <option value="">Tous les styles</option>
+                                    <option value="casual">Casual</option>
+                                    <option value="formel">Formel</option>
+                                    <option value="sport">Sport</option>
+                                    <option value="soirée">Soirée</option>
+                                </select>
+                            </div>
+                            
+                            <div class="md:w-1/3 mb-4 md:mb-0">
+                                <label for="sort-filter" class="block text-sm font-medium mb-1 dark:text-gray-300">Trier par</label>
+                                <select id="sort-filter" name="sort" class="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary-dark">
+                                    <option value="recent">Plus récents</option>
+                                    <option value="popular">Plus populaires</option>
+                                </select>
+                            </div>
+                            
+                            <div class="md:w-1/3">
+                                <label for="search-filter" class="block text-sm font-medium mb-1 dark:text-gray-300">Recherche</label>
+                                <input type="text" id="search-filter" name="search" placeholder="Rechercher..." class="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary-dark">
+                            </div>
+                        </div>
+                        
+                        <div class="flex justify-end">
+                            <button type="button" id="reset-filters" class="px-4 py-2 mr-2 border border-gray-300 rounded-md text-gray-700 dark:text-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700">
+                                Réinitialiser
+                            </button>
+                            <button type="submit" class="px-4 py-2 bg-primary-dark text-white rounded-md hover:bg-primary">
+                                Appliquer les filtres
+                            </button>
+                        </div>
+                    </form>
+                </div>
+                
+                <div class="space-y-6" id="outfits-container">
+                    {% for outfit in outfits %}
+                        <div class="bg-gray-50 dark:bg-gray-700 rounded-lg overflow-hidden shadow outfit-card" data-style="{{ outfit.style|lower }}">
+                            <div class="p-4">
+                                <div class="flex items-center mb-3">
+                                    <div class="h-10 w-10 rounded-full bg-primary-light flex items-center justify-center text-white">
+                                        <i class="fas fa-user"></i>
+                                    </div>
+                                    <div class="ml-3">
+                                        <p class="font-medium dark:text-white">{{ outfit.user.name }}</p>
+                                        <p class="text-xs text-gray-500 dark:text-gray-400">{{ outfit.created_at|date('d/m/Y H:i') }}</p>
+                                    </div>
+                                </div>
+                                
+                                <h2 class="text-xl font-semibold mb-2 dark:text-white">{{ outfit.title }}</h2>
+                                
+                                {% if outfit.description %}
+                                    <p class="text-gray-700 dark:text-gray-300 mb-3">{{ outfit.description }}</p>
+                                {% endif %}
+                                
+                                <div class="mb-4">
+                                    <div class="rounded-lg overflow-hidden">
+                                        <img src="{{ outfit.image_url }}" alt="{{ outfit.title }}" class="w-full h-auto">
+                                    </div>
+                                </div>
+                                
+                                <div class="flex justify-between items-center">
+                                    <div class="flex items-center space-x-4">
+                                        <button class="flex items-center text-gray-500 dark:text-gray-400 hover:text-primary-dark outfit-like-btn" data-id="{{ outfit.id }}">
+                                            <i class="far fa-heart mr-1"></i>
+                                            <span>{{ outfit.likes }}</span>
+                                        </button>
+                                        <a href="{{ path('app_social_outfit_detail', {'id': outfit.id}) }}" class="flex items-center text-gray-500 dark:text-gray-400 hover:text-primary-dark">
+                                            <i class="far fa-comment mr-1"></i>
+                                            <span>Détails</span>
+                                        </a>
+                                    </div>
+                                    
+                                    <span class="px-2 py-1 bg-gray-200 dark:bg-gray-800 text-xs rounded-full text-gray-700 dark:text-gray-300">
+                                        {{ outfit.style }}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="bg-gray-50 dark:bg-gray-700 rounded-lg p-8 text-center">
+                    <i class="fas fa-users text-5xl text-gray-300 mb-4"></i>
+                    <h2 class="text-xl font-semibold mb-2 dark:text-white">Aucune tenue partagée</h2>
+                    <p class="text-gray-600 dark:text-gray-400 mb-4">Soyez le premier à partager une tenue !</p>
+                    <a href="{{ path('app_outfit_history') }}" class="inline-flex items-center px-4 py-2 bg-primary-dark hover:bg-primary text-white rounded-md">
+                        <i class="fas fa-share-alt mr-2"></i> Partager une tenue
+                    </a>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<script>
+    const filterBtn = document.getElementById('filter-btn');
+    const filterPanel = document.getElementById('filter-panel');
+    const filterForm = document.getElementById('filter-form');
+    const resetFiltersBtn = document.getElementById('reset-filters');
+    const styleFilter = document.getElementById('style-filter');
+    const sortFilter = document.getElementById('sort-filter');
+    const searchFilter = document.getElementById('search-filter');
+    const outfitsContainer = document.getElementById('outfits-container');
+    
+    filterBtn?.addEventListener('click', function() {
+        filterPanel.classList.toggle('hidden');
+    });
+    
+    resetFiltersBtn?.addEventListener('click', function() {
+        styleFilter.value = '';
+        sortFilter.value = 'recent';
+        searchFilter.value = '';
+        
+        document.querySelectorAll('.outfit-card').forEach(card => {
+            card.style.display = 'block';
+        });
+    });
+    
+    filterForm?.addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const styleValue = styleFilter.value.toLowerCase();
+        const searchValue = searchFilter.value.toLowerCase();
+        const sortValue = sortFilter.value;
+        
+        document.querySelectorAll('.outfit-card').forEach(card => {
+            const cardStyle = card.getAttribute('data-style')?.toLowerCase();
+            const cardContent = card.textContent.toLowerCase();
+            
+            const styleMatch = !styleValue || cardStyle === styleValue;
+            const searchMatch = !searchValue || cardContent.includes(searchValue);
+            
+            if (styleMatch && searchMatch) {
+                card.style.display = 'block';
+            } else {
+                card.style.display = 'none';
+            }
+        });
+        
+        const outfitCards = Array.from(document.querySelectorAll('.outfit-card[style="display: block"]'));
+        
+        if (sortValue === 'popular') {
+            outfitCards.sort((a, b) => {
+                const likesA = parseInt(a.querySelector('.outfit-like-btn span').textContent);
+                const likesB = parseInt(b.querySelector('.outfit-like-btn span').textContent);
+                return likesB - likesA;
+            });
+        } else {
+        }
+        
+        outfitCards.forEach(card => {
+            outfitsContainer.appendChild(card);
+        });
+    });
+    
+    const likeBtns = document.querySelectorAll('.outfit-like-btn');
+    
+    likeBtns.forEach(btn => {
+        btn.addEventListener('click', function() {
+            const outfitId = this.getAttribute('data-id');
+            const likeCount = this.querySelector('span');
+            const icon = this.querySelector('i');
+            
+            if (icon.classList.contains('far')) {
+                icon.classList.remove('far');
+                icon.classList.add('fas', 'text-red-500');
+                likeCount.textContent = parseInt(likeCount.textContent) + 1;
+            } else {
+                icon.classList.remove('fas', 'text-red-500');
+                icon.classList.add('far');
+                likeCount.textContent = parseInt(likeCount.textContent) - 1;
+            }
+            
+            console.log('Toggle like for outfit:', outfitId);
+        });
+    });
+</script>
+{% endblock %}
