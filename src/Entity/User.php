@@ -1,55 +1,60 @@
 <?php
+
 namespace App\Entity;
 
+use App\Repository\UserRepository;
+use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
+use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
 use Symfony\Component\Security\Core\User\UserInterface;
-use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
 
-#[ORM\Entity]
-#[UniqueEntity(fields: ['username'], message: 'Ce nom d\'utilisateur est déjà utilisé')]
-#[UniqueEntity(fields: ['email'], message: 'Cet email est déjà utilisé')]
+#[ORM\Entity(repositoryClass: UserRepository::class)]
+#[ORM\HasLifecycleCallbacks]
 class User implements UserInterface, PasswordAuthenticatedUserInterface
 {
     #[ORM\Id]
     #[ORM\GeneratedValue]
-    #[ORM\Column(type: 'integer')]
+    #[ORM\Column]
     private ?int $id = null;
 
-    #[ORM\Column(type: 'string', length: 50, unique: true)]
-    private ?string $username = null;
-
-    #[ORM\Column(type: 'string', length: 180, unique: true)]
+    #[ORM\Column(length: 180, unique: true)]
     private ?string $email = null;
 
-    #[ORM\Column(type: 'json')]
+    #[ORM\Column]
     private array $roles = [];
 
-    #[ORM\Column(type: 'string')]
-    private string $password = '';
+    #[ORM\Column]
+    private ?string $password = null;
 
-    public function addRole(string $role): self
+    #[ORM\Column(length: 255, nullable: true)]
+    private ?string $nom = 'Utilisateur';
+
+    #[ORM\Column(type: Types::DATETIME_MUTABLE)]
+    private ?\DateTimeInterface $createdAt = null;
+
+    #[ORM\Column(type: Types::DATETIME_MUTABLE)]
+    private ?\DateTimeInterface $updatedAt = null;
+
+    #[ORM\OneToMany(targetEntity: Outfit::class, mappedBy: 'user')]
+    private Collection $outfits;
+
+    #[ORM\OneToMany(targetEntity: UserWardrobe::class, mappedBy: 'user', cascade: ['persist', 'remove'])]
+    private Collection $wardrobeItems;
+
+    public function __construct()
     {
-        if (!in_array($role, $this->roles)) {
-            $this->roles[] = $role;
-        }
-        return $this;
+        $this->outfits = new ArrayCollection();
+        $this->wardrobeItems = new ArrayCollection();
+        $this->roles = ['ROLE_USER'];
+        $this->createdAt = new \DateTime();
+        $this->updatedAt = new \DateTime();
     }
 
     public function getId(): ?int
     {
         return $this->id;
-    }
-
-    public function getUsername(): ?string
-    {
-        return $this->username;
-    }
-
-    public function setUsername(string $username): self
-    {
-        $this->username = $username;
-        return $this;
     }
 
     public function getEmail(): ?string
@@ -63,27 +68,31 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         return $this;
     }
 
+    public function getNom(): ?string
+    {
+        return $this->nom;
+    }
+
+    public function setNom(?string $nom): self
+    {
+        $this->nom = $nom ?? 'Utilisateur';
+        return $this;
+    }
+
+    public function getUserIdentifier(): string
+    {
+        return $this->email;
+    }
+
     public function getRoles(): array
     {
-        $roles = $this->roles;
-        $roles[] = 'ROLE_USER';
-
-        if (empty($roles)) {
-            $roles[] = 'ROLE_USER';
-        }
-
-        return array_unique($roles);
+        return array_unique($this->roles);
     }
 
     public function setRoles(array $roles): self
     {
         $this->roles = $roles;
         return $this;
-    }
-
-    public function isAdmin(): bool
-    {
-        return in_array('ROLE_ADMIN', $this->getRoles());
     }
 
     public function getPassword(): string
@@ -97,30 +106,53 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         return $this;
     }
 
-    public function getSalt(): ?string
-    {
-        return null;
-    }
-
     public function eraseCredentials(): void
     {
     }
 
-    public function getUserIdentifier(): string
+    public function getCreatedAt(): ?\DateTimeInterface
     {
-        return (string) $this->email;
+        return $this->createdAt;
     }
 
-    private ?string $plainPassword = null;
-
-    public function getPlainPassword(): ?string
+    public function getUpdatedAt(): ?\DateTimeInterface
     {
-        return $this->plainPassword;
+        return $this->updatedAt;
     }
 
-    public function setPlainPassword(?string $plainPassword): self
+    public function getOutfits(): Collection
     {
-        $this->plainPassword = $plainPassword;
-        return $this;
+        return $this->outfits;
+    }
+
+    public function getWardrobeItems(): Collection
+    {
+        return $this->wardrobeItems;
+    }
+
+    public function hasItemInWardrobe(ClothingItem $item): bool
+    {
+        foreach ($this->wardrobeItems as $wardrobeItem) {
+            if ($wardrobeItem->getClothingItem()->getId() === $item->getId()) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public function getWardrobeItem(ClothingItem $item): ?UserWardrobe
+    {
+        foreach ($this->wardrobeItems as $wardrobeItem) {
+            if ($wardrobeItem->getClothingItem()->getId() === $item->getId()) {
+                return $wardrobeItem;
+            }
+        }
+        return null;
+    }
+
+    #[ORM\PreUpdate]
+    public function updateTimestamp(): void
+    {
+        $this->updatedAt = new \DateTime();
     }
 }
