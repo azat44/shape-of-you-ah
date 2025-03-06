@@ -1,38 +1,96 @@
 {% extends 'base.html.twig' %}
 
-{% block title %}Gestion des vêtements{% endblock %}
+{% block title %}Gestion des Articles | Shape of You{% endblock %}
 
 {% block body %}
 <div class="container mx-auto px-4 py-8">
-    <h1 class="text-2xl font-bold mb-6">Liste des vêtements</h1>
+    <div class="flex justify-between items-center mb-6">
+        <h1 class="text-2xl font-bold dark:text-white">Liste des Vêtements</h1>
+        <div class="flex space-x-4">
+            <a href="{{ path('app_clothing_item_new') }}" class="bg-primary-dark hover:bg-primary text-white px-4 py-2 rounded">
+                Ajouter un vêtement
+            </a>
+            <a href="{{ path('app_admin_dashboard') }}" class="text-blue-600 dark:text-blue-400 hover:underline py-2">
+                Retour au dashboard
+            </a>
+        </div>
+    </div>
     
-    <div class="bg-white shadow rounded-lg overflow-hidden">
-        <table class="w-full">
-            <thead class="bg-gray-100">
-                <tr>
-                    <th class="px-4 py-2 text-left">Nom</th>
-                    <th class="px-4 py-2 text-left">Catégorie</th>
-                    <th class="px-4 py-2 text-left">Couleur</th>
-                    <th class="px-4 py-2 text-left">Actions</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for item in items %}
-                <tr class="border-t">
-                    <td class="px-4 py-2">{{ item.name }}</td>
-                    <td class="px-4 py-2">{{ item.category.name }}</td>
-                    <td class="px-4 py-2">{{ item.color }}</td>
-                    <td class="px-4 py-2">
-                        <a href="{{ path('app_admin_item_details', {'id': item.id}) }}" class="text-blue-500 hover:underline">Détails</a>
-                    </td>
-                </tr>
-                {% else %}
-                <tr>
-                    <td colspan="4" class="px-4 py-2 text-center text-gray-500">Aucun vêtement trouvé.</td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+    {% for flash_message in app.flashes('success') %}
+    <div class="bg-green-100 border-l-4 border-green-500 text-green-700 p-4 mb-4" role="alert">
+        {{ flash_message }}
+    </div>
+    {% endfor %}
+    
+    <div class="bg-white dark:bg-gray-800 shadow rounded-lg overflow-hidden">
+        <div class="overflow-x-auto">
+            <table class="w-full">
+                <thead class="bg-gray-50 dark:bg-gray-700">
+                    <tr>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Image</th>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Nom</th>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Catégorie</th>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Couleur</th>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Prix</th>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Actions</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
+                    {% if items is defined and items is not empty %}
+                        {% for clothingItem in items %}
+                        <tr class="border-t dark:border-gray-700">
+                            <td class="px-4 py-4 whitespace-nowrap">
+                                <div class="h-10 w-10 rounded-full overflow-hidden">
+                                    {% if clothingItem.imageUrl is defined and clothingItem.imageUrl %}
+                                        <img src="{{ clothingItem.imageUrl }}" alt="{{ clothingItem.name }}" class="h-full w-full object-cover">
+                                    {% else %}
+                                        <img src="/images/placeholder.jpg" alt="{{ clothingItem.name }}" class="h-full w-full object-cover">
+                                    {% endif %}
+                                </div>
+                            </td>
+                            <td class="px-4 py-4 whitespace-nowrap text-sm font-medium dark:text-white">
+                                {{ clothingItem.name }}
+                            </td>
+                            <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                                {{ clothingItem.category.name }}
+                            </td>
+                            <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                                {% if clothingItem.color %}
+                                <span class="inline-block h-4 w-4 rounded-full mr-1" style="background-color: {{ clothingItem.color }};"></span>
+                                {{ clothingItem.color }}
+                                {% else %}
+                                -
+                                {% endif %}
+                            </td>
+                            <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                                {% if clothingItem.price %}
+                                {{ clothingItem.price }}€
+                                {% else %}
+                                -
+                                {% endif %}
+                            </td>
+                            <td class="px-4 py-4 whitespace-nowrap text-sm">
+                                <div class="flex space-x-2">
+                                    {% if app_admin_items_show is defined %}
+                                        <a href="{{ path('app_admin_items_show', {id: clothingItem.id}) }}" class="text-blue-600 dark:text-blue-400 hover:underline">Voir</a>
+                                    {% endif %}
+                                    <a href="{{ path('app_admin_items_edit', {id: clothingItem.id}) }}" class="text-yellow-600 dark:text-yellow-400 hover:underline">Modifier</a>
+                                    <form method="post" action="{{ path('app_admin_items_delete', {id: clothingItem.id}) }}" onsubmit="return confirm('Êtes-vous sûr de vouloir supprimer cet article?');" style="display:inline-block;">
+                                        <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ clothingItem.id) }}">
+                                        <button type="submit" class="text-red-600 dark:text-red-400 hover:underline">Supprimer</button>
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    {% else %}
+                        <tr>
+                            <td colspan="6" class="px-4 py-4 text-center text-gray-500 dark:text-gray-400">Aucun article trouvé</td>
+                        </tr>
+                    {% endif %}
+                </tbody>
+            </table>
+        </div>
     </div>
 </div>
 {% endblock %}

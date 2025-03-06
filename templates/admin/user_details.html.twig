@@ -1,0 +1,101 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Détails de l'Utilisateur | Shape of You{% endblock %}
+
+{% block body %}
+<div class="container mx-auto px-4 py-8">
+    <div class="flex justify-between items-center mb-6">
+        <h1 class="text-2xl font-bold dark:text-white">Détails de l'Utilisateur</h1>
+        <a href="{{ path('app_admin_users') }}" class="text-blue-600 dark:text-blue-400 hover:underline">
+            <i class="fas fa-arrow-left mr-1"></i> Retour à la liste
+        </a>
+    </div>
+    
+    <div class="bg-white dark:bg-gray-800 shadow rounded-lg overflow-hidden mb-6">
+        <div class="p-6">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-xl font-semibold dark:text-white">Informations</h2>
+                <a href="{{ path('app_admin_users_edit', {id: user.id}) }}" class="text-sm bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded">
+                    Modifier
+                </a>
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    <p class="text-sm text-gray-500 dark:text-gray-400 mb-1">Nom d'utilisateur</p>
+                    <p class="font-medium dark:text-white">{{ user.username ?? user.nom ?? 'Non défini' }}</p>
+                </div>
+                
+                <div>
+                    <p class="text-sm text-gray-500 dark:text-gray-400 mb-1">Email</p>
+                    <p class="font-medium dark:text-white">{{ user.email }}</p>
+                </div>
+                
+                <div>
+                    <p class="text-sm text-gray-500 dark:text-gray-400 mb-1">Rôles</p>
+                    <div class="flex flex-wrap gap-2">
+                        {% for role in user.roles %}
+                            <span class="bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-300 text-xs px-2 py-1 rounded">
+                                {{ role }}
+                            </span>
+                        {% endfor %}
+                    </div>
+                </div>
+                
+                <div>
+                    <p class="text-sm text-gray-500 dark:text-gray-400 mb-1">Date d'inscription</p>
+                    <p class="font-medium dark:text-white">
+                        {% if user.createdAt is defined %}
+                            {{ user.createdAt|date('d/m/Y H:i') }}
+                        {% else %}
+                            Non disponible
+                        {% endif %}
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="bg-white dark:bg-gray-800 shadow rounded-lg overflow-hidden">
+        <div class="p-6">
+            <h2 class="text-xl font-semibold dark:text-white mb-4">Garde-robe</h2>
+            
+            {% if user.wardrobeItems is defined and user.wardrobeItems|length > 0 %}
+                <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+                    {% for item in user.wardrobeItems %}
+                        <div class="bg-gray-50 dark:bg-gray-700 p-3 rounded-lg">
+                            <div class="flex items-center space-x-3">
+                                {% if item.clothingItem.imageUrl is defined %}
+                                    <div class="h-12 w-12 rounded overflow-hidden">
+                                        <img src="{{ item.clothingItem.imageUrl }}" alt="{{ item.clothingItem.name }}" class="h-full w-full object-cover">
+                                    </div>
+                                {% else %}
+                                    <div class="h-12 w-12 bg-gray-200 dark:bg-gray-600 rounded flex items-center justify-center">
+                                        <span class="text-gray-500 dark:text-gray-400 text-xs">Image</span>
+                                    </div>
+                                {% endif %}
+                                
+                                <div>
+                                    <p class="font-medium dark:text-white">{{ item.clothingItem.name }}</p>
+                                    <p class="text-xs text-gray-500 dark:text-gray-400">{{ item.clothingItem.category.name }}</p>
+                                </div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <p class="text-gray-500 dark:text-gray-400">Aucun article dans la garde-robe</p>
+            {% endif %}
+        </div>
+    </div>
+    
+    <div class="mt-6 text-right">
+        <form method="post" action="{{ path('app_admin_users_delete', {id: user.id}) }}" onsubmit="return confirm('Êtes-vous sûr de vouloir supprimer cet utilisateur? Cette action ne peut pas être annulée.');">
+            <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ user.id) }}">
+            <button type="submit" class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded">
+                Supprimer l'utilisateur
+            </button>
+        </form>
+    </div>
+</div>
+{% endblock %}

@@ -1,38 +1,68 @@
 {% extends 'base.html.twig' %}
 
-{% block title %}Gestion des utilisateurs{% endblock %}
+{% block title %}Gestion des Utilisateurs | Shape of You{% endblock %}
 
 {% block body %}
 <div class="container mx-auto px-4 py-8">
-    <h1 class="text-2xl font-bold mb-6">Liste des utilisateurs</h1>
+    <div class="flex justify-between items-center mb-6">
+        <h1 class="text-2xl font-bold dark:text-white">Liste des Utilisateurs</h1>
+        <a href="{{ path('app_admin_dashboard') }}" class="text-blue-600 dark:text-blue-400 hover:underline">
+            <i class="fas fa-arrow-left mr-1"></i> Retour au dashboard
+        </a>
+    </div>
     
-    <div class="bg-white shadow rounded-lg overflow-hidden">
-        <table class="w-full">
-            <thead class="bg-gray-100">
-                <tr>
-                    <th class="px-4 py-2 text-left">Nom</th>
-                    <th class="px-4 py-2 text-left">Email</th>
-                    <th class="px-4 py-2 text-left">Date d'inscription</th>
-                    <th class="px-4 py-2 text-left">Actions</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for user in users %}
-                <tr class="border-t">
-                    <td class="px-4 py-2">{{ user.name }}</td>
-                    <td class="px-4 py-2">{{ user.email }}</td>
-                    <td class="px-4 py-2">{{ user.createdAt|date('d/m/Y') }}</td>
-                    <td class="px-4 py-2">
-                        <a href="{{ path('app_admin_user_details', {'id': user.id}) }}" class="text-blue-500 hover:underline">Détails</a>
-                    </td>
-                </tr>
-                {% else %}
-                <tr>
-                    <td colspan="4" class="px-4 py-2 text-center text-gray-500">Aucun utilisateur trouvé.</td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+    {% for flash_message in app.flashes('success') %}
+    <div class="bg-green-100 border-l-4 border-green-500 text-green-700 p-4 mb-4" role="alert">
+        {{ flash_message }}
+    </div>
+    {% endfor %}
+    
+    <div class="bg-white dark:bg-gray-800 shadow rounded-lg overflow-hidden">
+        <div class="overflow-x-auto">
+            <table class="w-full">
+                <thead class="bg-gray-50 dark:bg-gray-700">
+                    <tr>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Nom</th>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Email</th>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Date d'inscription</th>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Actions</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
+                    {% for user in users %}
+                    <tr class="border-t dark:border-gray-700">
+                        <td class="px-4 py-4 whitespace-nowrap text-sm font-medium dark:text-white">
+                            {{ user.username ?? user.nom ?? 'Utilisateur' }}
+                        </td>
+                        <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                            {{ user.email }}
+                        </td>
+                        <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                            {% if user.createdAt is defined %}
+                                {{ user.createdAt|date('d/m/Y') }}
+                            {% else %}
+                                -
+                            {% endif %}
+                        </td>
+                        <td class="px-4 py-4 whitespace-nowrap text-sm">
+                            <div class="flex space-x-2">
+                                <a href="{{ path('app_admin_users_show', {id: user.id}) }}" class="text-blue-600 dark:text-blue-400 hover:underline">Voir</a>
+                                <a href="{{ path('app_admin_users_edit', {id: user.id}) }}" class="text-yellow-600 dark:text-yellow-400 hover:underline">Modifier</a>
+                                <form method="post" action="{{ path('app_admin_users_delete', {id: user.id}) }}" onsubmit="return confirm('Êtes-vous sûr de vouloir supprimer cet utilisateur?');" style="display:inline-block;">
+                                    <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ user.id) }}">
+                                    <button type="submit" class="text-red-600 dark:text-red-400 hover:underline">Supprimer</button>
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="4" class="px-4 py-4 text-center text-gray-500 dark:text-gray-400">Aucun utilisateur trouvé</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
     </div>
 </div>
 {% endblock %}

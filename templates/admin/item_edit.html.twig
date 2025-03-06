@@ -1,0 +1,80 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Modifier l'Article | Shape of You{% endblock %}
+
+{% block body %}
+<div class="container mx-auto px-4 py-8">
+    <div class="flex justify-between items-center mb-6">
+        <h1 class="text-2xl font-bold dark:text-white">Modifier l'Article</h1>
+        <a href="{{ path('app_admin_items') }}" class="text-blue-600 dark:text-blue-400 hover:underline">
+            <i class="fas fa-arrow-left mr-1"></i> Retour à la liste
+        </a>
+    </div>
+    
+    <div class="bg-white dark:bg-gray-800 shadow rounded-lg overflow-hidden">
+        <div class="p-6">
+            <form method="post" action="{{ path('app_admin_items_edit', {id: item.id}) }}">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                    <div>
+                        <label for="name" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Nom</label>
+                        <input type="text" id="name" name="name" value="{{ item.name }}" required class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 dark:bg-gray-700 dark:text-white">
+                    </div>
+                    
+                    <div>
+                        <label for="category" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Catégorie</label>
+                        <select id="category" name="category" required class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 dark:bg-gray-700 dark:text-white">
+                            {% for category in categories %}
+                                <option value="{{ category.id }}" {% if item.category and item.category.id == category.id %}selected{% endif %}>{{ category.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    
+                    <div>
+                        <label for="description" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Description</label>
+                        <textarea id="description" name="description" rows="3" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 dark:bg-gray-700 dark:text-white">{{ item.description }}</textarea>
+                    </div>
+                    
+                    <div>
+                        <label for="color" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Couleur</label>
+                        <input type="text" id="color" name="color" value="{{ item.color }}" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 dark:bg-gray-700 dark:text-white">
+                    </div>
+                    
+                    <div>
+                        <label for="style" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Style</label>
+                        <input type="text" id="style" name="style" value="{{ item.style }}" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 dark:bg-gray-700 dark:text-white">
+                    </div>
+                    
+                    <div>
+                        <label for="price" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Prix (€)</label>
+                        <input type="number" id="price" name="price" value="{{ item.price }}" step="0.01" min="0" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 dark:bg-gray-700 dark:text-white">
+                    </div>
+                    
+                    <div>
+                        <label for="partnerLink" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Lien partenaire</label>
+                        <input type="url" id="partnerLink" name="partnerLink" value="{{ item.partnerLink }}" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 dark:bg-gray-700 dark:text-white">
+                    </div>
+                </div>
+                
+                <div class="flex items-center justify-between">
+                    <div>
+                        {% if item.imageUrl %}
+                        <div class="flex items-center space-x-2">
+                            <div class="h-12 w-12 rounded overflow-hidden">
+                                <img src="{{ item.imageUrl }}" alt="{{ item.name }}" class="h-full w-full object-cover">
+                            </div>
+                            <span class="text-sm text-gray-500 dark:text-gray-400">Image actuelle</span>
+                        </div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="text-right">
+                        <button type="submit" class="px-4 py-2 bg-primary-dark hover:bg-primary text-white rounded">
+                            Enregistrer les modifications
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,16 +1,23 @@
 <?php
+
 namespace App\Controller\Admin;
 
-use App\Service\AdminAIService;
+use App\Entity\User;
+use App\Entity\Category;
+use App\Entity\ClothingItem;
+use App\Entity\Partner;
 use App\Repository\UserRepository;
 use App\Repository\CategoryRepository;
 use App\Repository\ClothingItemRepository;
+use App\Repository\PartnerRepository;
+use App\Repository\AINotificationRepository;
 use App\Repository\OutfitRepository;
 use App\Repository\OutfitHistoryRepository;
-use App\Repository\AINotificationRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 
@@ -18,216 +25,299 @@ use Symfony\Component\Security\Http\Attribute\IsGranted;
 #[IsGranted('ROLE_ADMIN')]
 class AdminController extends AbstractController
 {
-    private EntityManagerInterface $entityManager;
-    private UserRepository $userRepository;
-    private CategoryRepository $categoryRepository;
-    private ClothingItemRepository $clothingItemRepository;
-    private OutfitRepository $outfitRepository;
-    private OutfitHistoryRepository $outfitHistoryRepository;
-    private AdminAIService $adminAIService;
-    private AINotificationRepository $notificationRepository;
+    private $entityManager;
     
-    public function __construct(
-        EntityManagerInterface $entityManager,
-        UserRepository $userRepository,
-        CategoryRepository $categoryRepository,
-        ClothingItemRepository $clothingItemRepository,
-        OutfitRepository $outfitRepository,
-        OutfitHistoryRepository $outfitHistoryRepository,
-        AdminAIService $adminAIService,
-        AINotificationRepository $notificationRepository
-    ) {
+    public function __construct(EntityManagerInterface $entityManager)
+    {
         $this->entityManager = $entityManager;
-        $this->userRepository = $userRepository;
-        $this->categoryRepository = $categoryRepository;
-        $this->clothingItemRepository = $clothingItemRepository;
-        $this->outfitRepository = $outfitRepository;
-        $this->outfitHistoryRepository = $outfitHistoryRepository;
-        $this->adminAIService = $adminAIService;
-        $this->notificationRepository = $notificationRepository;
     }
 
     #[Route('/', name: 'app_admin_dashboard')]
-    public function dashboard(): Response
+    public function dashboard(
+        UserRepository $userRepository,
+        ClothingItemRepository $clothingItemRepository,
+        CategoryRepository $categoryRepository,
+        AINotificationRepository $aiNotificationRepository,
+        OutfitRepository $outfitRepository = null,
+        OutfitHistoryRepository $outfitHistoryRepository = null
+    ): Response
     {
-        $totalUsers = count($this->userRepository->findAll());
-        $totalItems = count($this->clothingItemRepository->findAll());
-        $totalOutfits = count($this->outfitRepository->findAll());
-        $totalSharedOutfits = count($this->outfitHistoryRepository->findSharedOutfits());
-        
-        $adminData = [
-            'totalUsers' => $totalUsers,
-            'totalItems' => $totalItems,
-            'totalOutfits' => $totalOutfits,
-            'totalSharedOutfits' => $totalSharedOutfits
+        $stats = [
+            'users' => count($userRepository->findAll()),
+            'items' => count($clothingItemRepository->findAll()),
+            'categories' => count($categoryRepository->findAll()),
+            'notifications' => count($aiNotificationRepository->findActiveNotifications()),
+            'outfits' => $outfitRepository ? count($outfitRepository->findAll()) : 0,
+            'shared_outfits' => $outfitHistoryRepository ? count($outfitHistoryRepository->findSharedOutfits()) : 0
         ];
-    
-        $aiInsights = $this->adminAIService->generateAdminInsights($adminData);
         
-        $notifications = $this->notificationRepository->findBy(
-            [],
-            ['createdAt' => 'DESC'],
-            10
-        );
+        $recentUsers = $userRepository->findRecentUsers(5);
+        $recentItems = $clothingItemRepository->findLatestItems(5);
         
-        $userGrowthData = $this->getUserGrowthData();
-        $outfitStyleData = $this->getOutfitStyleData();
-        $categoryData = $this->getCategoryData();
-        $activityData = $this->getActivityData();
-    
         return $this->render('admin/dashboard.html.twig', [
-            'stats' => [
-                'users' => $totalUsers,
-                'items' => $totalItems,
-                'outfits' => $totalOutfits,
-                'shared_outfits' => $totalSharedOutfits
-            ],
-            'aiInsights' => $aiInsights['insights'] ?? 'Aucun insight disponible',
-            'notifications' => $notifications,
-            'userGrowthData' => $userGrowthData,
-            'outfitStyleData' => $outfitStyleData,
-            'categoryData' => $categoryData,
-            'activityData' => $activityData
+            'stats' => $stats,
+            'recentUsers' => $recentUsers,
+            'recentItems' => $recentItems
         ]);
     }
+    
+    // ------------------- USERS CRUD -------------------
     
     #[Route('/users', name: 'app_admin_users')]
-    public function users(): Response
+    public function usersList(UserRepository $userRepository): Response
     {
-        $users = $this->userRepository->findAll();
-        
         return $this->render('admin/users.html.twig', [
-            'users' => $users
+            'users' => $userRepository->findAll()
         ]);
     }
+    
+    #[Route('/users/{id}', name: 'app_admin_users_show')]
+    public function showUser(User $user): Response
+    {
+        return $this->render('admin/user_details.html.twig', [
+            'user' => $user
+        ]);
+    }
+    
+    #[Route('/users/{id}/edit', name: 'app_admin_users_edit', methods: ['GET', 'POST'])]
+    public function editUser(Request $request, User $user): Response
+    {
+        if ($request->isMethod('POST')) {
+            $user->setEmail($request->request->get('email'));
+            $user->setNom($request->request->get('nom'));
+            $user->setRoles($request->request->get('roles', []));
+            
+            $this->entityManager->flush();
+            
+            $this->addFlash('success', 'Utilisateur mis à jour avec succès');
+            return $this->redirectToRoute('app_admin_users');
+        }
+        
+        return $this->render('admin/user_edit.html.twig', [
+            'user' => $user
+        ]);
+    }
+    
+    #[Route('/users/{id}/delete', name: 'app_admin_users_delete', methods: ['POST'])]
+    public function deleteUser(Request $request, User $user): Response
+    {
+        if ($this->isCsrfTokenValid('delete'.$user->getId(), $request->request->get('_token'))) {
+            $this->entityManager->remove($user);
+            $this->entityManager->flush();
+            $this->addFlash('success', 'Utilisateur supprimé avec succès');
+        }
+        
+        return $this->redirectToRoute('app_admin_users');
+    }
+    
+    // ------------------- CATEGORIES CRUD -------------------
+    
+    #[Route('/categories', name: 'app_admin_categories')]
+    public function categoriesList(CategoryRepository $categoryRepository): Response
+    {
+        return $this->render('admin/categories.html.twig', [
+            'categories' => $categoryRepository->findAll()
+        ]);
+    }
+    
+    #[Route('/categories/new', name: 'app_admin_categories_new', methods: ['GET', 'POST'])]
+    public function newCategory(Request $request): Response
+    {
+        if ($request->isMethod('POST')) {
+            $category = new Category();
+            $category->setName($request->request->get('name'));
+            $category->setDescription($request->request->get('description'));
+            
+            $this->entityManager->persist($category);
+            $this->entityManager->flush();
+            
+            $this->addFlash('success', 'Catégorie créée avec succès');
+            return $this->redirectToRoute('app_admin_categories');
+        }
+        
+        return $this->render('admin/category_new.html.twig');
+    }
+    
+    #[Route('/categories/{id}/edit', name: 'app_admin_categories_edit', methods: ['GET', 'POST'])]
+    public function editCategory(Request $request, Category $category): Response
+    {
+        if ($request->isMethod('POST')) {
+            $category->setName($request->request->get('name'));
+            $category->setDescription($request->request->get('description'));
+            
+            $this->entityManager->flush();
+            
+            $this->addFlash('success', 'Catégorie mise à jour avec succès');
+            return $this->redirectToRoute('app_admin_categories');
+        }
+        
+        return $this->render('admin/category_edit.html.twig', [
+            'category' => $category
+        ]);
+    }
+    
+    #[Route('/categories/{id}/delete', name: 'app_admin_categories_delete', methods: ['GET', 'POST'])]
+    public function deleteCategory(Category $category): Response
+    {
+        try {
+            $this->entityManager->remove($category);
+            $this->entityManager->flush();
+            $this->addFlash('success', 'Catégorie supprimée avec succès');
+        } catch (\Exception $e) {
+            $this->addFlash('error', 'Erreur lors de la suppression: ' . $e->getMessage());
+        }
+        
+        return $this->redirectToRoute('app_admin_categories');
+    }
+    
+    // ------------------- CLOTHING ITEMS CRUD -------------------
     
     #[Route('/items', name: 'app_admin_items')]
-    public function items(): Response
+    public function itemsList(ClothingItemRepository $clothingItemRepository): Response
     {
-        $items = $this->clothingItemRepository->findAll();
-        
         return $this->render('admin/items.html.twig', [
-            'items' => $items
+            'items' => $clothingItemRepository->findAll()
         ]);
     }
     
-    #[Route('/outfits', name: 'app_admin_outfits')]
-    public function outfits(): Response
+    #[Route('/items/{id}/edit', name: 'app_admin_items_edit', methods: ['GET', 'POST'])]
+    public function editItem(Request $request, ClothingItem $item, CategoryRepository $categoryRepository): Response
     {
-        $outfits = $this->outfitRepository->findAll();
-        
-        return $this->render('admin/outfits.html.twig', [
-            'outfits' => $outfits
-        ]);
-    }
-    
-    #[Route('/statistics', name: 'app_admin_statistics')]
-    public function statistics(): Response
-    {
-        $userGrowthData = $this->getUserGrowthData();
-        $outfitsByStyleData = $this->getOutfitStyleData();
-        
-        return $this->render('admin/statistics.html.twig', [
-            'userGrowthData' => $userGrowthData,
-            'outfitsByStyleData' => $outfitsByStyleData
-        ]);
-    }
-    
-    private function getUserGrowthData(): array
-    {
-        $months = ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Juin'];
-        $totalUsers = count($this->userRepository->findAll());
-        
-        $data = [
-            (int)($totalUsers * 0.3),  
-            (int)($totalUsers * 0.45),
-            (int)($totalUsers * 0.6),  
-            (int)($totalUsers * 0.7),  
-            (int)($totalUsers * 0.85), 
-            $totalUsers                
-        ];
-        
-        if ($totalUsers === 0) {
-            $data = [12, 19, 25, 30, 35, 42];
+        if ($request->isMethod('POST')) {
+            $category = $categoryRepository->find($request->request->get('category'));
+            
+            $item->setName($request->request->get('name'));
+            $item->setDescription($request->request->get('description'));
+            $item->setCategory($category);
+            $item->setColor($request->request->get('color'));
+            $item->setStyle($request->request->get('style'));
+            $item->setPrice($request->request->get('price') ? floatval($request->request->get('price')) : null);
+            $item->setPartnerLink($request->request->get('partnerLink'));
+            
+            $this->entityManager->flush();
+            
+            $this->addFlash('success', 'Vêtement mis à jour avec succès');
+            return $this->redirectToRoute('app_admin_items');
         }
-
-        return [
-            'labels' => $months,
-            'data' => $data
-        ];
+        
+        return $this->render('admin/item_edit.html.twig', [
+            'item' => $item,
+            'categories' => $categoryRepository->findAll()
+        ]);
     }
     
-    private function getOutfitStyleData(): array
+    #[Route('/items/{id}/delete', name: 'app_admin_items_delete', methods: ['POST'])]
+    public function deleteItem(Request $request, ClothingItem $item): Response
     {
-        $styleMap = [
-            'casual' => 0,
-            'formel' => 0,
-            'sport' => 0,
-            'soirée' => 0
-        ];
-        
-        foreach ($this->outfitRepository->findAll() as $outfit) {
-            $style = strtolower($outfit->getStyle() ?? '');
-            if (isset($styleMap[$style])) {
-                $styleMap[$style]++;
+        if ($this->isCsrfTokenValid('delete'.$item->getId(), $request->request->get('_token'))) {
+            try {
+                $em = $this->entityManager;
+                $query = $em->createQuery('DELETE FROM App\Entity\UserWardrobe uw WHERE uw.clothingItem = :item');
+                $query->setParameter('item', $item);
+                $query->execute();
+                
+                $em->remove($item);
+                $em->flush();
+                
+                $this->addFlash('success', 'Vêtement supprimé avec succès');
+            } catch (\Exception $e) {
+                $this->addFlash('error', 'Erreur lors de la suppression: ' . $e->getMessage());
             }
         }
         
-        foreach ($this->outfitHistoryRepository->findAll() as $history) {
-            $style = strtolower($history->getStyle() ?? '');
-            if (isset($styleMap[$style])) {
-                $styleMap[$style]++;
-            }
-        }
-        
-        if (array_sum(array_values($styleMap)) === 0) {
-            $styleMap = ['casual' => 45, 'formel' => 18, 'sport' => 32, 'soirée' => 12];
-        }
-        
-        return [
-            'labels' => array_map('ucfirst', array_keys($styleMap)),
-            'data' => array_values($styleMap)
-        ];
+        return $this->redirectToRoute('app_admin_items');
     }
     
-
-    private function getCategoryData(): array
+    // ------------------- PARTNER LINKS CRUD -------------------
+    
+    #[Route('/partners', name: 'app_admin_partners')]
+    public function partnersList(PartnerRepository $partnerRepository): Response
     {
-        $categories = $this->categoryRepository->findAll();
-        
-        $categoryData = [];
-        foreach ($categories as $category) {
-            $categoryData[$category->getName() ?? 'Non catégorisé'] = count($category->getClothingItems());
-        }
-        
-        if (empty($categoryData)) {
-            $categoryData = [
-                'T-shirts' => 45,
-                'Jeans' => 38,
-                'Robes' => 22,
-                'Vestes' => 16,
-                'Chaussures' => 30
-            ];
-        }
-        
-        return [
-            'labels' => array_keys($categoryData),
-            'data' => array_values($categoryData)
-        ];
+        return $this->render('admin/partners.html.twig', [
+            'partners' => $partnerRepository->findAll()
+        ]);
     }
     
-
-    private function getActivityData(): array
+    #[Route('/partners/new', name: 'app_admin_partners_new', methods: ['GET', 'POST'])]
+    public function newPartner(Request $request): Response
     {
-        $days = ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim'];
+        if ($request->isMethod('POST')) {
+            $partner = new Partner();
+            $partner->setName($request->request->get('name'));
+            $partner->setUrl($request->request->get('url'));
+            $partner->setDescription($request->request->get('description'));
+            
+            $this->entityManager->persist($partner);
+            $this->entityManager->flush();
+            
+            $this->addFlash('success', 'Partenaire ajouté avec succès');
+            return $this->redirectToRoute('app_admin_partners');
+        }
         
-        $outfitsGenerated = [8, 12, 15, 10, 20, 25, 18];
-        $outfitsShared = [3, 5, 7, 4, 8, 10, 6];
-        
-        return [
-            'labels' => $days,
-            'outfitsGenerated' => $outfitsGenerated,
-            'outfitsShared' => $outfitsShared
-        ];
+        return $this->render('admin/partner_new.html.twig');
     }
+    
+    #[Route('/partners/{id}/edit', name: 'app_admin_partners_edit', methods: ['GET', 'POST'])]
+    public function editPartner(Request $request, Partner $partner): Response
+    {
+        if ($request->isMethod('POST')) {
+            $partner->setName($request->request->get('name'));
+            $partner->setUrl($request->request->get('url'));
+            $partner->setDescription($request->request->get('description'));
+            
+            $this->entityManager->flush();
+            
+            $this->addFlash('success', 'Partenaire mis à jour avec succès');
+            return $this->redirectToRoute('app_admin_partners');
+        }
+        
+        return $this->render('admin/partner_edit.html.twig', [
+            'partner' => $partner
+        ]);
+    }
+    
+    #[Route('/partners/{id}/delete', name: 'app_admin_partners_delete', methods: ['POST'])]
+    public function deletePartner(Request $request, Partner $partner): Response
+    {
+        if ($this->isCsrfTokenValid('delete'.$partner->getId(), $request->request->get('_token'))) {
+            $this->entityManager->remove($partner);
+            $this->entityManager->flush();
+            $this->addFlash('success', 'Partenaire supprimé avec succès');
+        }
+        
+        return $this->redirectToRoute('app_admin_partners');
+    }
+    
+    // ------------------- AI ALERTS -------------------
+    
+    #[Route('/alerts', name: 'app_admin_alerts')]
+    public function aiAlerts(AINotificationRepository $aiNotificationRepository): Response
+    {
+        return $this->render('admin/alerts.html.twig', [
+            'notifications' => $aiNotificationRepository->findActiveNotifications()
+        ]);
+    }
+    
+    #[Route('/alerts/{id}/resolve', name: 'app_admin_alerts_resolve', methods: ['POST'])]
+    public function resolveAlert(Request $request, $id, AINotificationRepository $aiNotificationRepository): JsonResponse
+    {
+        $notification = $aiNotificationRepository->find($id);
+        
+        if (!$notification) {
+            return $this->json(['success' => false, 'message' => 'Notification non trouvée'], 404);
+        }
+        
+        $notification->setStatus('resolved');
+        $this->entityManager->flush();
+        
+        return $this->json(['success' => true]);
+    }
+
+    #[Route('/items/{id}/view', name: 'app_admin_items_show')]
+public function showItem(ClothingItem $item): Response
+{
+    return $this->render('admin/item_details.html.twig', [
+        'item' => $item
+    ]);
+}
 }

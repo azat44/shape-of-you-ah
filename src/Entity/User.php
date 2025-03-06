@@ -36,10 +36,28 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\OneToMany(mappedBy: 'user', targetEntity: Outfit::class, cascade: ['persist', 'remove'])]
     private Collection $outfits;
     
+    // Ajout du champ createdAt
+    #[ORM\Column(type: 'datetime_immutable', options: ['default' => 'CURRENT_TIMESTAMP'])]
+    private ?\DateTimeImmutable $createdAt = null;
+    
     public function __construct()
     {
         $this->wardrobeItems = new ArrayCollection();
         $this->outfits = new ArrayCollection();
+        $this->createdAt = new \DateTimeImmutable();
+    }
+
+    // Getter pour createdAt
+    public function getCreatedAt(): ?\DateTimeImmutable
+    {
+        return $this->createdAt;
+    }
+
+    // Setter pour createdAt
+    public function setCreatedAt(\DateTimeImmutable $createdAt): self
+    {
+        $this->createdAt = $createdAt;
+        return $this;
     }
 
     public function addRole(string $role): self

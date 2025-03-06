@@ -1,0 +1,91 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Détails de l'Article | Shape of You{% endblock %}
+
+{% block body %}
+<div class="container mx-auto px-4 py-8">
+    <div class="flex justify-between items-center mb-6">
+        <h1 class="text-2xl font-bold dark:text-white">Détails de l'Article</h1>
+        <a href="{{ path('app_admin_items') }}" class="text-blue-600 dark:text-blue-400 hover:underline">
+            <i class="fas fa-arrow-left mr-1"></i> Retour à la liste
+        </a>
+    </div>
+    
+    <div class="bg-white dark:bg-gray-800 shadow rounded-lg overflow-hidden mb-6">
+        <div class="p-6">
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <div class="lg:col-span-1">
+                    <div class="aspect-w-1 aspect-h-1 bg-gray-200 rounded-lg overflow-hidden">
+                        {% if item.imageUrl is defined and item.imageUrl %}
+                            <img src="{{ item.imageUrl }}" alt="{{ item.name }}" class="w-full h-full object-center object-cover">
+                        {% else %}
+                            <img src="/images/placeholder.jpg" alt="{{ item.name }}" class="w-full h-full object-center object-cover">
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <div class="lg:col-span-2">
+                    <div class="flex justify-between items-center mb-4">
+                        <h2 class="text-xl font-semibold dark:text-white">{{ item.name }}</h2>
+                        <a href="{{ path('app_admin_items_edit', {id: item.id}) }}" class="text-sm bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded">
+                            Modifier
+                        </a>
+                    </div>
+                    
+                    <div class="space-y-4">
+                        <div>
+                            <p class="text-sm text-gray-500 dark:text-gray-400 mb-1">Description</p>
+                            <p class="font-medium dark:text-white">{{ item.description ?? 'Aucune description' }}</p>
+                        </div>
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
+                                <p class="text-sm text-gray-500 dark:text-gray-400 mb-1">Catégorie</p>
+                                <p class="font-medium dark:text-white">{{ item.category.name }}</p>
+                            </div>
+                            
+                            <div>
+                                <p class="text-sm text-gray-500 dark:text-gray-400 mb-1">Couleur</p>
+                                {% if item.color %}
+                                <div class="flex items-center">
+                                    <span class="inline-block h-4 w-4 rounded-full mr-2" style="background-color: {{ item.color }};"></span>
+                                    <span class="font-medium dark:text-white">{{ item.color }}</span>
+                                </div>
+                                {% else %}
+                                <p class="font-medium dark:text-white">Non spécifiée</p>
+                                {% endif %}
+                            </div>
+                            
+                            <div>
+                                <p class="text-sm text-gray-500 dark:text-gray-400 mb-1">Style</p>
+                                <p class="font-medium dark:text-white">{{ item.style ?? 'Non spécifié' }}</p>
+                            </div>
+                            
+                            <div>
+                                <p class="text-sm text-gray-500 dark:text-gray-400 mb-1">Prix</p>
+                                <p class="font-medium dark:text-white">{{ item.price ? item.price ~ '€' : 'Non spécifié' }}</p>
+                            </div>
+                        </div>
+                        
+                        {% if item.partnerLink is defined and item.partnerLink %}
+                        <div>
+                            <p class="text-sm text-gray-500 dark:text-gray-400 mb-1">Lien partenaire</p>
+                            <a href="{{ item.partnerLink }}" target="_blank" class="text-blue-600 dark:text-blue-400 hover:underline">{{ item.partnerLink }}</a>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            
+            <div class="mt-6 text-right">
+                <form method="post" action="{{ path('app_admin_items_delete', {id: item.id}) }}" onsubmit="return confirm('Êtes-vous sûr de vouloir supprimer cet article? Cette action ne peut pas être annulée.');">
+                    <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ item.id) }}">
+                    <button type="submit" class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded">
+                        Supprimer l'article
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
