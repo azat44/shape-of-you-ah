@@ -1,0 +1,146 @@
+{% if app.user %}
+<nav class="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
+    <div class="container mx-auto px-4">
+        <div class="flex justify-between h-16">
+            <div class="flex items-center">
+                <a href="{{ path('app_home') }}" class="flex-shrink-0 flex items-center">
+                    <span class="text-xl font-bold text-primary-dark dark:text-primary-light">Shape of You</span>
+                </a>
+            </div>
+            
+            {% if app.user %}
+                <div class="hidden md:flex md:items-center md:space-x-4">
+                    <a href="{{ path('app_home') }}" class="px-3 py-2 rounded-md text-sm font-medium {% if app.request.get('_route') == 'app_home' %}text-white bg-primary-dark{% else %}text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700{% endif %}">
+                        <i class="fas fa-home mr-1"></i> Accueil
+                    </a>
+                    
+                    <a href="{{ path('app_wardrobe') }}" class="px-3 py-2 rounded-md text-sm font-medium {% if app.request.get('_route') starts with 'app_wardrobe' %}text-white bg-primary-dark{% else %}text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700{% endif %}">
+                        <i class="fas fa-tshirt mr-1"></i> Garde-robe
+                    </a>
+                    
+                    <a href="{{ path('app_outfit_history') }}" class="px-3 py-2 rounded-md text-sm font-medium {% if app.request.get('_route') starts with 'app_outfit' %}text-white bg-primary-dark{% else %}text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700{% endif %}">
+                        <i class="fas fa-history mr-1"></i> Tenues
+                    </a>
+                    
+                    <a href="{{ path('app_social_feed') }}" class="px-3 py-2 rounded-md text-sm font-medium {% if app.request.get('_route') starts with 'app_social' %}text-white bg-primary-dark{% else %}text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700{% endif %}">
+                        <i class="fas fa-users mr-1"></i> Social
+                    </a>
+                    
+                    <a href="{{ path('app_partner_shop') }}" class="px-3 py-2 rounded-md text-sm font-medium {% if app.request.get('_route') starts with 'app_partner' %}text-white bg-primary-dark{% else %}text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700{% endif %}">
+                        <i class="fas fa-shopping-bag mr-1"></i> Boutique
+                    </a>
+                    
+                    {% if is_granted('ROLE_ADMIN') %}
+                        <a href="{{ path('app_admin_dashboard') }}" class="px-3 py-2 rounded-md text-sm font-medium bg-secondary-dark text-white hover:bg-secondary">
+                            <i class="fas fa-cog mr-1"></i> Admin
+                        </a>
+                    {% endif %}
+                </div>
+                
+                <div class="flex items-center">
+                    <button id="theme-toggle" class="px-3 py-2 rounded-md">
+                        <i class="fas fa-moon dark:hidden"></i>
+                        <i class="fas fa-sun hidden dark:inline"></i>
+                    </button>
+                    
+                    <div class="ml-3 relative">
+                        <div>
+                            <button id="user-menu-button" class="flex text-sm rounded-full focus:outline-none">
+                                <span class="sr-only">Open user menu</span>
+                                <div class="h-8 w-8 rounded-full bg-primary-light flex items-center justify-center text-white">
+                                    <i class="fas fa-user"></i>
+                                </div>
+                            </button>
+                        </div>
+                        <div id="user-menu" class="hidden absolute right-0 mt-2 w-48 rounded-md shadow-lg py-1 bg-white dark:bg-gray-800 ring-1 ring-black ring-opacity-5 z-10">
+                            <div class="px-4 py-2 text-sm text-gray-700 dark:text-gray-200 border-b">
+                                {{ app.user.nom }}
+                            </div>
+                            <a href="#" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700">
+                                <i class="fas fa-user-circle mr-1"></i> Profil
+                            </a>
+                            <a href="{{ path('app_logout') }}" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700">
+                                <i class="fas fa-sign-out-alt mr-1"></i> Déconnexion
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            {% else %}
+                <div class="flex items-center space-x-2">
+                    <a href="{{ path('app_login') }}" class="px-4 py-2 rounded-md text-sm font-medium text-primary-dark border border-primary-dark hover:bg-primary-dark hover:text-white transition duration-150">
+                        Connexion
+                    </a>
+                    <a href="{{ path('app_register') }}" class="px-4 py-2 rounded-md text-sm font-medium bg-primary-dark text-white hover:bg-primary transition duration-150">
+                        Inscription
+                    </a>
+                </div>
+            {% endif %}
+        </div>
+        
+        {% if app.user %}
+            <div class="md:hidden">
+                <div class="flex flex-wrap justify-center space-x-2 pb-2">
+                    <a href="{{ path('app_home') }}" class="px-3 py-2 rounded-md text-sm font-medium {% if app.request.get('_route') == 'app_home' %}text-white bg-primary-dark{% else %}text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700{% endif %}">
+                        <i class="fas fa-home mr-1"></i> Accueil
+                    </a>
+                    
+                    <a href="{{ path('app_wardrobe') }}" class="px-3 py-2 rounded-md text-sm font-medium {% if app.request.get('_route') starts with 'app_wardrobe' %}text-white bg-primary-dark{% else %}text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700{% endif %}">
+                        <i class="fas fa-tshirt mr-1"></i> Garde-robe
+                    </a>
+                    
+                    <a href="{{ path('app_outfit_history') }}" class="px-3 py-2 rounded-md text-sm font-medium {% if app.request.get('_route') starts with 'app_outfit' %}text-white bg-primary-dark{% else %}text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700{% endif %}">
+                        <i class="fas fa-history mr-1"></i> Tenues
+                    </a>
+                    
+                    <a href="{{ path('app_social_feed') }}" class="px-3 py-2 rounded-md text-sm font-medium {% if app.request.get('_route') starts with 'app_social' %}text-white bg-primary-dark{% else %}text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700{% endif %}">
+                        <i class="fas fa-users mr-1"></i> Social
+                    </a>
+                    
+                    <a href="{{ path('app_partner_shop') }}" class="px-3 py-2 rounded-md text-sm font-medium {% if app.request.get('_route') starts with 'app_partner' %}text-white bg-primary-dark{% else %}text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700{% endif %}">
+                        <i class="fas fa-shopping-bag mr-1"></i> Shop
+                    </a>
+                    
+                    {% if is_granted('ROLE_ADMIN') %}
+                        <a href="{{ path('app_admin_dashboard') }}" class="px-3 py-2 rounded-md text-sm font-medium bg-secondary-dark text-white hover:bg-secondary">
+                            <i class="fas fa-cog mr-1"></i> Admin
+                        </a>
+                    {% endif %}
+                </div>
+            </div>
+        {% endif %}
+    </div>
+</nav>
+
+<script>
+    document.getElementById('user-menu-button')?.addEventListener('click', function() {
+        document.getElementById('user-menu').classList.toggle('hidden');
+    });
+    
+    document.addEventListener('click', function(event) {
+        const userMenu = document.getElementById('user-menu');
+        const userMenuButton = document.getElementById('user-menu-button');
+        
+        if (!userMenu || !userMenuButton) return;
+        
+        if (!userMenu.contains(event.target) && !userMenuButton.contains(event.target)) {
+            userMenu.classList.add('hidden');
+        }
+    });
+    
+    document.getElementById('theme-toggle')?.addEventListener('click', function() {
+        if (document.documentElement.classList.contains('dark')) {
+            document.documentElement.classList.remove('dark');
+            localStorage.theme = 'light';
+        } else {
+            document.documentElement.classList.add('dark');
+            localStorage.theme = 'dark';
+        }
+    });
+    
+    if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+        document.documentElement.classList.add('dark');
+    } else {
+        document.documentElement.classList.remove('dark');
+    }
+</script>
+{% endif %}

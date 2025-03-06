@@ -64,9 +64,10 @@ class SecurityController extends AbstractController
         throw new \LogicException('Cette méthode peut rester vide, Symfony gère la déconnexion.');
     }
     
-    #[Route(path: '/', name: 'app_home')]
-    public function home(): Response
-    {
-        return $this->render('default/index.html.twig');
-    }
+    // Supprimer ou commenter cette méthode
+    // #[Route(path: '/', name: 'app_home')]
+    // public function home(): Response
+    // {
+    //     return $this->render('default/index.html.twig');
+    // }
 }
