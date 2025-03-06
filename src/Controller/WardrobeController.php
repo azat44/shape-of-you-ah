@@ -49,6 +49,19 @@ class WardrobeController extends AbstractController
     #[Route('/', name: 'app_wardrobe')]
     public function index(Request $request): Response
     {
+        $predefinedCategories = [
+            'T-shirts',
+            'Pantalons', 
+            'Robes', 
+            'Vestes', 
+            'Chaussures', 
+            'Accessoires', 
+            'Pulls', 
+            'Shorts', 
+            'Jupes', 
+            'Chemises'
+        ];
+    
         $user = $this->getUser();
         $query = $request->query->get('q');
         $wardrobeItems = $user->getWardrobeItems();
@@ -77,7 +90,8 @@ class WardrobeController extends AbstractController
             'wardrobeItems' => $wardrobeItems,
             'wardrobeByCategory' => $wardrobeByCategory,
             'allClothingItems' => $allClothingItems,
-            'searchQuery' => $query
+            'searchQuery' => $query,
+            'predefinedCategories' => $predefinedCategories
         ]);
     }
     
@@ -198,11 +212,20 @@ class WardrobeController extends AbstractController
         $user = $this->getUser();
         
         $name = $request->request->get('name');
-        $categoryId = $request->request->get('category');
+        $categoryName = $request->request->get('category');
         $imageFile = $request->files->get('imageFile');
         
-        if (!$name || !$categoryId || !$imageFile) {
+        if (!$name || !$categoryName || !$imageFile) {
             return $this->json(['error' => 'Informations manquantes'], 400);
+        }
+        
+        $category = $this->entityManager->getRepository(Category::class)
+            ->findOneBy(['name' => $categoryName]);
+        
+        if (!$category) {
+            $category = new Category();
+            $category->setName($categoryName);
+            $this->entityManager->persist($category);
         }
         
         $originalFilename = pathinfo($imageFile->getClientOriginalName(), PATHINFO_FILENAME);
@@ -216,8 +239,6 @@ class WardrobeController extends AbstractController
         }
         
         $imageFile->move($uploadDir, $newFilename);
-        
-        $category = $this->entityManager->getRepository(Category::class)->find($categoryId);
         
         $clothingItem = new ClothingItem();
         $clothingItem->setName($name);

@@ -1,0 +1,346 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Ma Garde-robe | Shape of You{% endblock %}
+
+{% block body %}
+<div class="max-w-6xl mx-auto">
+    <div class="bg-white dark:bg-gray-800 shadow-md rounded-lg overflow-hidden">
+        <div class="p-6">
+            <div class="flex flex-col md:flex-row md:items-center md:justify-between mb-6">
+                <h1 class="text-2xl font-bold mb-2 md:mb-0 dark:text-white">Ma Garde-robe</h1>
+                
+                <div class="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2">
+                    <a href="{{ path('app_wardrobe_browse') }}" class="inline-flex items-center px-4 py-2 bg-primary-dark hover:bg-primary text-white rounded-md">
+                        <i class="fas fa-search mr-2"></i> Parcourir les vêtements
+                    </a>
+                    <button id="add-item-btn" class="inline-flex items-center px-4 py-2 bg-green-600 hover:bg-green-500 text-white rounded-md">
+                        <i class="fas fa-plus mr-2"></i> Ajouter un vêtement
+                    </button>
+                </div>
+            </div>
+            
+            <div class="mb-6">
+                <form action="{{ path('app_wardrobe') }}" method="get" class="flex">
+                    <input type="text" name="q" value="{{ searchQuery|default('') }}" placeholder="Rechercher dans ma garde-robe..." class="flex-grow px-4 py-2 border rounded-l-md focus:outline-none focus:ring-2 focus:ring-primary-dark">
+                    <button type="submit" class="px-4 py-2 bg-primary-dark text-white rounded-r-md hover:bg-primary">
+                        <i class="fas fa-search"></i>
+                    </button>
+                </form>
+            </div>
+            
+            {% if wardrobeItems|length > 0 %}
+                <div class="mb-6 overflow-x-auto">
+                    <div class="flex space-x-2 pb-2">
+                        <a href="#all" class="px-4 py-2 bg-primary-dark text-white rounded-md category-nav active">Tous</a>
+                        {% for category, items in wardrobeByCategory %}
+                            <a href="#{{ category|lower|replace({' ': '-'}) }}" class="px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-white rounded-md hover:bg-gray-300 dark:hover:bg-gray-600 category-nav">
+                                {{ category }}
+                                <span class="ml-1 px-2 py-0.5 bg-gray-500 text-white text-xs rounded-full">{{ items|length }}</span>
+                            </a>
+                        {% endfor %}
+                    </div>
+                </div>
+                
+                <div id="all" class="category-content">
+                    <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+                        {% for item in wardrobeItems %}
+                            <div class="bg-gray-50 dark:bg-gray-700 rounded-lg overflow-hidden shadow clothing-item">
+                                <div class="h-40 overflow-hidden relative">
+                                    <img src="{{ item.clothingItem.imageUrl }}" alt="{{ item.clothingItem.name }}" class="w-full h-full object-cover">
+                                    <button class="absolute top-2 right-2 p-1 bg-white dark:bg-gray-800 rounded-full text-gray-500 hover:text-red-500 dark:hover:text-red-400 favorite-btn" data-id="{{ item.clothingItem.id }}" data-favorite="{{ item.isFavorite ? 'true' : 'false' }}">
+                                        <i class="fas fa-heart {% if item.isFavorite %}text-red-500{% endif %}"></i>
+                                    </button>
+                                </div>
+                                <div class="p-3">
+                                    <h3 class="font-medium text-sm mb-1 truncate dark:text-white">{{ item.clothingItem.name }}</h3>
+                                    <p class="text-xs text-gray-500 dark:text-gray-400">{{ item.clothingItem.category }}</p>
+                                    {% if item.clothingItem.price %}
+                                        <p class="text-sm font-semibold mt-1 dark:text-gray-300">{{ item.clothingItem.price|number_format(2, ',', ' ') }} €</p>
+                                    {% endif %}
+                                    <div class="flex space-x-1 mt-2">
+                                        <a href="{{ path('app_clothing_item_show', {'id': item.clothingItem.id}) }}" class="text-xs px-2 py-1 bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-300 rounded hover:bg-gray-300 dark:hover:bg-gray-500">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                        {% if item.clothingItem.partnerLink %}
+                                            <a href="{{ path('app_partner_buy', {'id': item.clothingItem.id}) }}" class="text-xs px-2 py-1 bg-blue-100 text-blue-700 rounded hover:bg-blue-200" target="_blank">
+                                                <i class="fas fa-shopping-cart"></i>
+                                            </a>
+                                        {% endif %}
+                                        <button class="text-xs px-2 py-1 bg-red-100 text-red-700 rounded hover:bg-red-200 remove-item-btn" data-id="{{ item.clothingItem.id }}">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                
+                {% for category, items in wardrobeByCategory %}
+                    <div id="{{ category|lower|replace({' ': '-'}) }}" class="category-content hidden">
+                        <h2 class="text-xl font-semibold mb-4 dark:text-white">{{ category }}</h2>
+                        <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+                            {% for item in items %}
+                                <div class="bg-gray-50 dark:bg-gray-700 rounded-lg overflow-hidden shadow clothing-item">
+                                    <div class="h-40 overflow-hidden relative">
+                                        <img src="{{ item.clothingItem.imageUrl }}" alt="{{ item.clothingItem.name }}" class="w-full h-full object-cover">
+                                        <button class="absolute top-2 right-2 p-1 bg-white dark:bg-gray-800 rounded-full text-gray-500 hover:text-red-500 dark:hover:text-red-400 favorite-btn" data-id="{{ item.clothingItem.id }}" data-favorite="{{ item.isFavorite ? 'true' : 'false' }}">
+                                            <i class="fas fa-heart {% if item.isFavorite %}text-red-500{% endif %}"></i>
+                                        </button>
+                                    </div>
+                                    <div class="p-3">
+                                        <h3 class="font-medium text-sm mb-1 truncate dark:text-white">{{ item.clothingItem.name }}</h3>
+                                        {% if item.clothingItem.price %}
+                                            <p class="text-sm font-semibold mt-1 dark:text-gray-300">{{ item.clothingItem.price|number_format(2, ',', ' ') }} €</p>
+                                        {% endif %}
+                                        <div class="flex space-x-1 mt-2">
+                                            <a href="{{ path('app_clothing_item_show', {'id': item.clothingItem.id}) }}" class="text-xs px-2 py-1 bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-300 rounded hover:bg-gray-300 dark:hover:bg-gray-500">
+                                                <i class="fas fa-eye"></i>
+                                            </a>
+                                            {% if item.clothingItem.partnerLink %}
+                                                <a href="{{ path('app_partner_buy', {'id': item.clothingItem.id}) }}" class="text-xs px-2 py-1 bg-blue-100 text-blue-700 rounded hover:bg-blue-200" target="_blank">
+                                                    <i class="fas fa-shopping-cart"></i>
+                                                </a>
+                                            {% endif %}
+                                            <button class="text-xs px-2 py-1 bg-red-100 text-red-700 rounded hover:bg-red-200 remove-item-btn" data-id="{{ item.clothingItem.id }}">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                {% endfor %}
+            {% else %}
+                <div class="bg-gray-50 dark:bg-gray-700 rounded-lg p-8 text-center">
+                    <i class="fas fa-tshirt text-5xl text-gray-300 mb-4"></i>
+                    <h2 class="text-xl font-semibold mb-2 dark:text-white">Votre garde-robe est vide</h2>
+                    <p class="text-gray-600 dark:text-gray-400 mb-4">Commencez à ajouter des vêtements pour créer des tenues stylées !</p>
+                    <a href="{{ path('app_wardrobe_browse') }}" class="inline-flex items-center px-4 py-2 bg-primary-dark hover:bg-primary text-white rounded-md">
+                        <i class="fas fa-search mr-2"></i> Parcourir les vêtements
+                    </a>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<div id="add-item-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+    <div class="bg-white dark:bg-gray-800 rounded-lg p-6 max-w-md w-full">
+        <div class="flex justify-between items-center mb-4">
+            <h3 class="text-xl font-bold dark:text-white">Ajouter un vêtement</h3>
+            <button type="button" class="text-gray-500 hover:text-gray-700 close-modal">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        
+        <form id="add-item-form" method="post" action="{{ path('app_wardrobe_add_custom_item') }}" enctype="multipart/form-data" class="space-y-4">
+            <div>
+                <label for="name" class="block text-sm font-medium mb-1 dark:text-gray-300">Nom du vêtement</label>
+                <input type="text" id="name" name="name" required class="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary-dark">
+            </div>
+            
+            <div>
+                <label for="category" class="block text-sm font-medium mb-1 dark:text-gray-300">Catégorie</label>
+                <select id="category" name="category" required class="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary-dark">
+                    <option value="">Choisir une catégorie</option>
+                    {% for category in predefinedCategories %}
+                        <option value="{{ category }}">{{ category }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            
+            <div>
+                <label for="description" class="block text-sm font-medium mb-1 dark:text-gray-300">Description (optionnel)</label>
+                <textarea id="description" name="description" rows="2" class="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary-dark"></textarea>
+            </div>
+            
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label for="color" class="block text-sm font-medium mb-1 dark:text-gray-300">Couleur</label>
+                    <select id="color" name="color" class="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary-dark">
+                        <option value="">Sélectionner</option>
+                        <option value="blanc">Blanc</option>
+                        <option value="noir">Noir</option>
+                        <option value="bleu">Bleu</option>
+                        <option value="rouge">Rouge</option>
+                        <option value="vert">Vert</option>
+                        <option value="jaune">Jaune</option>
+                        <option value="gris">Gris</option>
+                        <option value="marron">Marron</option>
+                        <option value="rose">Rose</option>
+                        <option value="violet">Violet</option>
+                        <option value="orange">Orange</option>
+                    </select>
+                </div>
+                
+                <div>
+                    <label for="style" class="block text-sm font-medium mb-1 dark:text-gray-300">Style</label>
+                    <select id="style" name="style" class="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary-dark">
+                        <option value="">Sélectionner</option>
+                        <option value="casual">Casual</option>
+                        <option value="formel">Formel</option>
+                        <option value="sport">Sport</option>
+                        <option value="soirée">Soirée</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div>
+                <label for="price" class="block text-sm font-medium mb-1 dark:text-gray-300">Prix (optionnel)</label>
+                <input type="number" id="price" name="price" step="0.01" min="0" class="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary-dark">
+            </div>
+            
+            <div>
+                <label for="imageFile" class="block text-sm font-medium mb-1 dark:text-gray-300">Image</label>
+                <input type="file" id="imageFile" name="imageFile" accept="image/*" required class="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary-dark">
+            </div>
+            
+            <div class="flex justify-end space-x-2 mt-6">
+                <button type="button" class="px-4 py-2 border border-gray-300 rounded-md text-gray-700 dark:text-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 close-modal">
+                    Annuler
+                </button>
+                <button type="submit" class="px-4 py-2 bg-primary-dark text-white rounded-md hover:bg-primary">
+                    Ajouter
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div id="confirm-delete-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+    <div class="bg-white dark:bg-gray-800 rounded-lg p-6 max-w-sm w-full">
+        <div class="text-center mb-4">
+            <i class="fas fa-exclamation-triangle text-yellow-500 text-4xl mb-4"></i>
+            <h3 class="text-xl font-bold dark:text-white">Confirmer la suppression</h3>
+            <p class="mt-2 text-gray-600 dark:text-gray-400">Êtes-vous sûr de vouloir supprimer ce vêtement de votre garde-robe ?</p>
+        </div>
+        
+        <div class="flex justify-center space-x-4">
+            <button id="cancel-delete" class="px-4 py-2 border border-gray-300 rounded-md text-gray-700 dark:text-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700">
+                Annuler
+            </button>
+            <button id="confirm-delete" class="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-500">
+                Supprimer
+            </button>
+        </div>
+    </div>
+</div>
+
+<script>
+    const categoryNavs = document.querySelectorAll('.category-nav');
+    const categoryContents = document.querySelectorAll('.category-content');
+    
+    categoryNavs.forEach(nav => {
+        nav.addEventListener('click', function(e) {
+            e.preventDefault();
+            
+            categoryNavs.forEach(n => n.classList.remove('bg-primary-dark', 'text-white'));
+            categoryNavs.forEach(n => n.classList.add('bg-gray-200', 'dark:bg-gray-700', 'text-gray-700', 'dark:text-white'));
+            this.classList.remove('bg-gray-200', 'dark:bg-gray-700', 'text-gray-700', 'dark:text-white');
+            this.classList.add('bg-primary-dark', 'text-white');
+            
+            const target = this.getAttribute('href').substring(1);
+            categoryContents.forEach(content => content.classList.add('hidden'));
+            document.getElementById(target).classList.remove('hidden');
+        });
+    });
+    
+    const addItemModal = document.getElementById('add-item-modal');
+    const addItemBtn = document.getElementById('add-item-btn');
+    const closeModalBtns = document.querySelectorAll('.close-modal');
+    
+    addItemBtn?.addEventListener('click', function() {
+        addItemModal.classList.remove('hidden');
+    });
+    
+    closeModalBtns.forEach(btn => {
+        btn.addEventListener('click', function() {
+            addItemModal.classList.add('hidden');
+            document.getElementById('add-item-form').reset();
+        });
+    });
+    
+    addItemModal?.addEventListener('click', function(e) {
+        if (e.target === addItemModal) {
+            addItemModal.classList.add('hidden');
+            document.getElementById('add-item-form').reset();
+        }
+    });
+    
+    const favoriteBtns = document.querySelectorAll('.favorite-btn');
+    
+    favoriteBtns.forEach(btn => {
+        btn.addEventListener('click', function() {
+            const itemId = this.getAttribute('data-id');
+            const isFavorite = this.getAttribute('data-favorite') === 'true';
+            
+            fetch('{{ path('app_wardrobe_toggle_favorite', {'id': 'ITEM_ID'}) }}'.replace('ITEM_ID', itemId), {
+                method: 'POST',
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    const heartIcon = this.querySelector('i');
+                    
+                    if (data.isFavorite) {
+                        heartIcon.classList.add('text-red-500');
+                        this.setAttribute('data-favorite', 'true');
+                    } else {
+                        heartIcon.classList.remove('text-red-500');
+                        this.setAttribute('data-favorite', 'false');
+                    }
+                }
+            })
+            .catch(error => console.error('Erreur:', error));
+        });
+    });
+    
+    const removeItemBtns = document.querySelectorAll('.remove-item-btn');
+    const confirmDeleteModal = document.getElementById('confirm-delete-modal');
+    const cancelDeleteBtn = document.getElementById('cancel-delete');
+    const confirmDeleteBtn = document.getElementById('confirm-delete');
+    let itemToDelete = null;
+    
+    removeItemBtns.forEach(btn => {
+        btn.addEventListener('click', function() {
+            itemToDelete = this.getAttribute('data-id');
+            confirmDeleteModal.classList.remove('hidden');
+        });
+    });
+    
+    cancelDeleteBtn?.addEventListener('click', function() {
+        confirmDeleteModal.classList.add('hidden');
+        itemToDelete = null;
+    });
+    
+    confirmDeleteBtn?.addEventListener('click', function() {
+        if (itemToDelete) {
+            fetch('{{ path('app_wardrobe_remove_item', {'id': 'ITEM_ID'}) }}'.replace('ITEM_ID', itemToDelete), {
+                method: 'POST',
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    location.reload();
+                }
+            })
+            .catch(error => console.error('Erreur:', error));
+        }
+    });
+    
+    confirmDeleteModal?.addEventListener('click', function(e) {
+        if (e.target === confirmDeleteModal) {
+            confirmDeleteModal.classList.add('hidden');
+            itemToDelete = null;
+        }
+    });
+</script>
+{% endblock %}

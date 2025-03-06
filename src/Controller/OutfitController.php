@@ -103,7 +103,6 @@ class OutfitController extends AbstractController
         $outfit = $this->outfitHistoryRepository->findOneBy(['id' => $id, 'user' => $user]);
         
         if (!$outfit || $id <= 3) {
-            // Données de démonstration pour les tenues 1, 2, 3
             $demoData = [
                 1 => [
                     'id' => 1,
@@ -118,7 +117,6 @@ class OutfitController extends AbstractController
                         ['name' => 'Baskets noires', 'image_url' => '/images/basket-noir.jpg']
                     ]
                 ],
-                // Autres démos tenues 2 et 3...
             ];
             
             return $this->render('outfit/details.html.twig', [

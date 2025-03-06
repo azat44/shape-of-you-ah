@@ -7,12 +7,10 @@
     
     {% block stylesheets %}
         {{ encore_entry_link_tags('app') }}
-        {# Fallback CDN Tailwind #}
         <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     {% endblock %}
     
-    {# Theme Toggle Script #}
     <script defer src="{{ asset('js/theme-toggle.js') }}"></script>
 </head>
 <body class="min-h-screen 
@@ -20,23 +18,21 @@
     dark:bg-gray-900 dark:text-white
     transition-colors duration-300">
     
-    {# Navbar conditionnelle #}
     {% if app.user %}
         <div class="w-full">
             {% include 'components/navbar.html.twig' %}
         </div>
     {% endif %}
 
-    {# Contenu principal #}
     <main class="container mx-auto px-4 py-8">
         {% block body %}{% endblock %}
     </main>
     
-    {# Scripts #}
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     {% block javascripts %}
         {{ encore_entry_script_tags('app') }}
         {% block importmap %}{{ importmap('app') }}{% endblock %}
     {% endblock %}
 </body>
+
 </html>
