@@ -1,0 +1,38 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Gestion des vêtements{% endblock %}
+
+{% block body %}
+<div class="container mx-auto px-4 py-8">
+    <h1 class="text-2xl font-bold mb-6">Liste des vêtements</h1>
+    
+    <div class="bg-white shadow rounded-lg overflow-hidden">
+        <table class="w-full">
+            <thead class="bg-gray-100">
+                <tr>
+                    <th class="px-4 py-2 text-left">Nom</th>
+                    <th class="px-4 py-2 text-left">Catégorie</th>
+                    <th class="px-4 py-2 text-left">Couleur</th>
+                    <th class="px-4 py-2 text-left">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in items %}
+                <tr class="border-t">
+                    <td class="px-4 py-2">{{ item.name }}</td>
+                    <td class="px-4 py-2">{{ item.category.name }}</td>
+                    <td class="px-4 py-2">{{ item.color }}</td>
+                    <td class="px-4 py-2">
+                        <a href="{{ path('app_admin_item_details', {'id': item.id}) }}" class="text-blue-500 hover:underline">Détails</a>
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="4" class="px-4 py-2 text-center text-gray-500">Aucun vêtement trouvé.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

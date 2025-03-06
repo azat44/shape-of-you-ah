@@ -1,0 +1,38 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Gestion des tenues{% endblock %}
+
+{% block body %}
+<div class="container mx-auto px-4 py-8">
+    <h1 class="text-2xl font-bold mb-6">Liste des tenues</h1>
+    
+    <div class="bg-white shadow rounded-lg overflow-hidden">
+        <table class="w-full">
+            <thead class="bg-gray-100">
+                <tr>
+                    <th class="px-4 py-2 text-left">Nom</th>
+                    <th class="px-4 py-2 text-left">Utilisateur</th>
+                    <th class="px-4 py-2 text-left">Date de création</th>
+                    <th class="px-4 py-2 text-left">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for outfit in outfits %}
+                <tr class="border-t">
+                    <td class="px-4 py-2">{{ outfit.name }}</td>
+                    <td class="px-4 py-2">{{ outfit.user.name }}</td>
+                    <td class="px-4 py-2">{{ outfit.createdAt|date('d/m/Y') }}</td>
+                    <td class="px-4 py-2">
+                        <a href="{{ path('app_admin_outfit_details', {'id': outfit.id}) }}" class="text-blue-500 hover:underline">Détails</a>
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="4" class="px-4 py-2 text-center text-gray-500">Aucune tenue trouvée.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

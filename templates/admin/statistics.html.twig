@@ -1,0 +1,65 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Statistiques{% endblock %}
+
+{% block body %}
+<div class="container mx-auto px-4 py-8">
+    <h1 class="text-2xl font-bold mb-6">Statistiques de l'application</h1>
+    
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div class="bg-white shadow rounded-lg p-6">
+            <h2 class="text-xl font-semibold mb-4">Croissance des utilisateurs</h2>
+            <canvas id="userGrowthChart" class="w-full h-64"></canvas>
+        </div>
+        
+        <div class="bg-white shadow rounded-lg p-6">
+            <h2 class="text-xl font-semibold mb-4">Tenues par style</h2>
+            <canvas id="outfitStyleChart" class="w-full h-64"></canvas>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    const userCtx = document.getElementById('userGrowthChart').getContext('2d');
+    new Chart(userCtx, {
+        type: 'line',
+        data: {
+            labels: {{ userGrowthData.labels|json_encode|raw }},
+            datasets: [{
+                label: 'Nouveaux utilisateurs',
+                data: {{ userGrowthData.data|json_encode|raw }},
+                borderColor: 'rgb(59, 130, 246)',
+                backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                tension: 0.1
+            }]
+        },
+        options: {
+            responsive: true,
+            scales: {
+                y: { beginAtZero: true }
+            }
+        }
+    });
+
+    const styleCtx = document.getElementById('outfitStyleChart').getContext('2d');
+    new Chart(styleCtx, {
+        type: 'pie',
+        data: {
+            labels: {{ outfitsByStyleData.labels|json_encode|raw }},
+            datasets: [{
+                data: {{ outfitsByStyleData.data|json_encode|raw }},
+                backgroundColor: [
+                    'rgb(59, 130, 246)',
+                    'rgb(16, 185, 129)',
+                    'rgb(245, 158, 11)',
+                    'rgb(239, 68, 68)'
+                ]
+            }]
+        },
+        options: {
+            responsive: true
+        }
+    });
+</script>
+{% endblock %}
