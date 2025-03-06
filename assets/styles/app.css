@@ -1,3 +1,140 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* Intégration des directives Tailwind */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+    --primary-dark: #3490dc;
+    --primary: #4299e1;
+    --primary-light: #63b3ed;
+    --secondary-dark: #38a169;
+    --secondary: #48bb78;
+    
+    --theme-one-bg: #fdf2f8;
+    --theme-one-bg-alt: #fbcfe8;
+    --theme-one-text: #831843;
+    --theme-one-border: #f472b6;
+    --theme-one-primary: #db2777;
+    --theme-one-primary-dark: #be185d;
+    --theme-one-secondary: #8b5cf6;
+    
+    --theme-two-bg: #ecfdf5;
+    --theme-two-bg-alt: #a7f3d0;
+    --theme-two-text: #065f46;
+    --theme-two-border: #34d399;
+    --theme-two-primary: #10b981;
+    --theme-two-primary-dark: #059669;
+    --theme-two-secondary: #06b6d4;
+}
+
+@layer components {
+    .generate-button {
+        @apply inline-block px-4 py-2 bg-blue-500 text-white font-medium rounded-md cursor-pointer transition-colors;
+    }
+    .generate-button:hover {
+        @apply bg-blue-600;
+    }
+    .dark .generate-button {
+        @apply bg-blue-600;
+    }
+    .dark .generate-button:hover {
+        @apply bg-blue-700;
+    }
+    .theme-one .generate-button {
+        @apply bg-pink-600;
+    }
+    .theme-one .generate-button:hover {
+        @apply bg-pink-700;
+    }
+    .theme-two .generate-button {
+        @apply bg-green-500;
+    }
+    .theme-two .generate-button:hover {
+        @apply bg-green-600;
+    }
+    
+    .save-outfit-btn {
+        @apply inline-block px-4 py-2 bg-blue-500 text-white font-medium rounded-md transition-colors;
+    }
+    .save-outfit-btn:hover {
+        @apply bg-blue-600;
+    }
+    .dark .save-outfit-btn {
+        @apply bg-blue-600;
+    }
+    .dark .save-outfit-btn:hover {
+        @apply bg-blue-700;
+    }
+    .theme-one .save-outfit-btn {
+        @apply bg-pink-600;
+    }
+    .theme-one .save-outfit-btn:hover {
+        @apply bg-pink-700;
+    }
+    .theme-two .save-outfit-btn {
+        @apply bg-green-500;
+    }
+    .theme-two .save-outfit-btn:hover {
+        @apply bg-green-600;
+    }
+}
+
+.bg-primary-dark {
+    background-color: var(--primary-dark);
+}
+.bg-primary {
+    background-color: var(--primary);
+}
+.bg-primary-light {
+    background-color: var(--primary-light);
+}
+.bg-secondary-dark {
+    background-color: var(--secondary-dark);
+}
+.bg-secondary {
+    background-color: var(--secondary);
+}
+
+.theme-one { }
+.theme-one .bg-themeOneBg {
+    background-color: var(--theme-one-bg);
+}
+.theme-one .bg-themeOneBgAlt {
+    background-color: var(--theme-one-bg-alt);
+}
+.theme-one .text-themeOneText {
+    color: var(--theme-one-text);
+}
+.theme-one .border-themeOneBorder {
+    border-color: var(--theme-one-border);
+}
+.theme-one .bg-themeOnePrimary {
+    background-color: var(--theme-one-primary);
+}
+.theme-one .bg-themeOneSecondary {
+    background-color: var(--theme-one-secondary);
+}
+
+.theme-two { }
+.theme-two .bg-themeTwoBg {
+    background-color: var(--theme-two-bg);
+}
+.theme-two .bg-themeTwoBgAlt {
+    background-color: var(--theme-two-bg-alt);
+}
+.theme-two .text-themeTwoText {
+    color: var(--theme-two-text);
+}
+.theme-two .border-themeTwoBorder {
+    border-color: var(--theme-two-border);
+}
+.theme-two .bg-themeTwoPrimary {
+    background-color: var(--theme-two-primary);
+}
+.theme-two .bg-themeTwoSecondary {
+    background-color: var(--theme-two-secondary);
+}

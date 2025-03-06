@@ -1,70 +1,68 @@
 {% if app.user %}
-<nav class="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
+<nav class="bg-white dark:bg-gray-800 theme-one:bg-themeOneBg theme-two:bg-themeTwoBg border-b border-gray-200 dark:border-gray-700 theme-one:border-themeOneBorder theme-two:border-themeTwoBorder">
     <div class="container mx-auto px-4">
         <div class="flex justify-between h-16">
             <div class="flex items-center">
                 <a href="{{ path('app_home') }}" class="flex-shrink-0 flex items-center">
-                    <span class="text-xl font-bold text-primary-dark dark:text-primary-light">Shape of You</span>
+                    <span class="text-xl font-bold text-primary-dark dark:text-primary-light theme-one:text-themeOnePrimary theme-two:text-themeTwoPrimary">Shape of You</span>
                 </a>
             </div>
             
             {% if app.user %}
                 <div class="hidden md:flex md:items-center md:space-x-4">
-                    <a href="{{ path('app_home') }}" class="px-3 py-2 rounded-md text-sm font-medium {% if app.request.get('_route') == 'app_home' %}text-white bg-primary-dark{% else %}text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700{% endif %}">
+                    <a href="{{ path('app_home') }}" class="px-3 py-2 rounded-md text-sm font-medium {% if app.request.get('_route') == 'app_home' %}text-white bg-primary-dark dark:bg-primary theme-one:bg-themeOnePrimary theme-two:bg-themeTwoPrimary{% else %}text-gray-700 dark:text-gray-300 theme-one:text-themeOneText theme-two:text-themeTwoText hover:bg-gray-100 dark:hover:bg-gray-700 theme-one:hover:bg-themeOneBg/50 theme-two:hover:bg-themeTwoBg/50{% endif %}">
                         <i class="fas fa-home mr-1"></i> Accueil
                     </a>
                     
-                    <a href="{{ path('app_wardrobe') }}" class="px-3 py-2 rounded-md text-sm font-medium {% if app.request.get('_route') starts with 'app_wardrobe' %}text-white bg-primary-dark{% else %}text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700{% endif %}">
+                    <a href="{{ path('app_wardrobe') }}" class="px-3 py-2 rounded-md text-sm font-medium {% if app.request.get('_route') starts with 'app_wardrobe' %}text-white bg-primary-dark dark:bg-primary theme-one:bg-themeOnePrimary theme-two:bg-themeTwoPrimary{% else %}text-gray-700 dark:text-gray-300 theme-one:text-themeOneText theme-two:text-themeTwoText hover:bg-gray-100 dark:hover:bg-gray-700 theme-one:hover:bg-themeOneBg/50 theme-two:hover:bg-themeTwoBg/50{% endif %}">
                         <i class="fas fa-tshirt mr-1"></i> Garde-robe
                     </a>
                     
-                    <a href="{{ path('app_outfit_history') }}" class="px-3 py-2 rounded-md text-sm font-medium {% if app.request.get('_route') starts with 'app_outfit' %}text-white bg-primary-dark{% else %}text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700{% endif %}">
+                    <a href="{{ path('app_outfit_history') }}" class="px-3 py-2 rounded-md text-sm font-medium {% if app.request.get('_route') starts with 'app_outfit_history' %}text-white bg-primary-dark dark:bg-primary theme-one:bg-themeOnePrimary theme-two:bg-themeTwoPrimary{% else %}text-gray-700 dark:text-gray-300 theme-one:text-themeOneText theme-two:text-themeTwoText hover:bg-gray-100 dark:hover:bg-gray-700 theme-one:hover:bg-themeOneBg/50 theme-two:hover:bg-themeTwoBg/50{% endif %}">
                         <i class="fas fa-history mr-1"></i> Tenues
                     </a>
                     
-                    <a href="{{ path('app_outfit_generator') }}" class="px-3 py-2 rounded-md text-sm font-medium {% if app.request.get('_route') starts with 'app_outfit_generator' %}text-white bg-primary-dark{% else %}text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700{% endif %}">
-                        <i class="fas fa-tshirt mr-1"></i> Générateur de Tenues
+                    <a href="{{ path('app_outfit_generator') }}" class="px-3 py-2 rounded-md text-sm font-medium {% if app.request.get('_route') starts with 'app_outfit_generator' %}text-white bg-primary-dark dark:bg-primary theme-one:bg-themeOnePrimary theme-two:bg-themeTwoPrimary{% else %}text-gray-700 dark:text-gray-300 theme-one:text-themeOneText theme-two:text-themeTwoText hover:bg-gray-100 dark:hover:bg-gray-700 theme-one:hover:bg-themeOneBg/50 theme-two:hover:bg-themeTwoBg/50{% endif %}">
+                        <i class="fas fa-magic mr-1"></i> Générateur
                     </a>
                     
-                    <a href="{{ path('app_ai_image_analyze') }}" class="px-3 py-2 rounded-md text-sm font-medium {% if app.request.get('_route') starts with 'app_ai_image_analyze' %}text-white bg-primary-dark{% else %}text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700{% endif %}">
-                        <i class="fas fa-camera mr-1"></i> Analyser une Tenue
+                    <a href="{{ path('app_ai_image_analyze') }}" class="px-3 py-2 rounded-md text-sm font-medium {% if app.request.get('_route') starts with 'app_ai_image_analyze' %}text-white bg-primary-dark dark:bg-primary theme-one:bg-themeOnePrimary theme-two:bg-themeTwoPrimary{% else %}text-gray-700 dark:text-gray-300 theme-one:text-themeOneText theme-two:text-themeTwoText hover:bg-gray-100 dark:hover:bg-gray-700 theme-one:hover:bg-themeOneBg/50 theme-two:hover:bg-themeTwoBg/50{% endif %}">
+                        <i class="fas fa-camera mr-1"></i> Analyser
                     </a>
                     
-                    <a href="{{ path('app_social_feed') }}" class="px-3 py-2 rounded-md text-sm font-medium {% if app.request.get('_route') starts with 'app_social' %}text-white bg-primary-dark{% else %}text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700{% endif %}">
+                    <a href="{{ path('app_social_feed') }}" class="px-3 py-2 rounded-md text-sm font-medium {% if app.request.get('_route') starts with 'app_social' %}text-white bg-primary-dark dark:bg-primary theme-one:bg-themeOnePrimary theme-two:bg-themeTwoPrimary{% else %}text-gray-700 dark:text-gray-300 theme-one:text-themeOneText theme-two:text-themeTwoText hover:bg-gray-100 dark:hover:bg-gray-700 theme-one:hover:bg-themeOneBg/50 theme-two:hover:bg-themeTwoBg/50{% endif %}">
                         <i class="fas fa-users mr-1"></i> Social
                     </a>
                     
-                    
                     {% if is_granted('ROLE_ADMIN') %}
-                        <a href="{{ path('app_admin_dashboard') }}" class="px-3 py-2 rounded-md text-sm font-medium bg-secondary-dark text-white hover:bg-secondary">
+                        <a href="{{ path('app_admin_dashboard') }}" class="px-3 py-2 rounded-md text-sm font-medium bg-secondary-dark text-white hover:bg-secondary dark:bg-secondary theme-one:bg-themeOneSecondary theme-two:bg-themeTwoSecondary">
                             <i class="fas fa-cog mr-1"></i> Admin
                         </a>
                     {% endif %}
                 </div>
                 
-                <div class="flex items-center">
-                    <button id="theme-toggle" class="px-3 py-2 rounded-md">
-                        <i class="fas fa-moon dark:hidden"></i>
-                        <i class="fas fa-sun hidden dark:inline"></i>
+                <div class="flex items-center space-x-3">
+                    <button id="theme-toggle" class="w-10 h-10 flex items-center justify-center rounded-full bg-gray-200 dark:bg-gray-700 theme-one:bg-themeOneBg theme-two:bg-themeTwoBg transition duration-300 hover:ring-2 hover:ring-primary-light dark:hover:ring-primary theme-one:hover:ring-themeOnePrimary theme-two:hover:ring-themeTwoPrimary focus:outline-none">
+                        <i id="theme-icon" class="fas fa-sun text-yellow-500"></i>
                     </button>
                     
                     <div class="ml-3 relative">
                         <div>
                             <button id="user-menu-button" class="flex text-sm rounded-full focus:outline-none">
                                 <span class="sr-only">Open user menu</span>
-                                <div class="h-8 w-8 rounded-full bg-primary-light flex items-center justify-center text-white">
+                                <div class="h-8 w-8 rounded-full bg-primary-light dark:bg-primary theme-one:bg-themeOnePrimary theme-two:bg-themeTwoPrimary flex items-center justify-center text-white">
                                     <i class="fas fa-user"></i>
                                 </div>
                             </button>
                         </div>
-                        <div id="user-menu" class="hidden absolute right-0 mt-2 w-48 rounded-md shadow-lg py-1 bg-white dark:bg-gray-800 ring-1 ring-black ring-opacity-5 z-10">
-                            <div class="px-4 py-2 text-sm text-gray-700 dark:text-gray-200 border-b">
+                        <div id="user-menu" class="hidden absolute right-0 mt-2 w-48 rounded-md shadow-lg py-1 bg-white dark:bg-gray-800 theme-one:bg-themeOneBg theme-two:bg-themeTwoBg ring-1 ring-black ring-opacity-5 z-10">
+                            <div class="px-4 py-2 text-sm text-gray-700 dark:text-gray-200 theme-one:text-themeOneText theme-two:text-themeTwoText border-b dark:border-gray-700 theme-one:border-themeOneBorder theme-two:border-themeTwoBorder">
                                 {{ app.user.nom }}
                             </div>
-                            <a href="#" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700">
+                            <a href="#" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 theme-one:text-themeOneText theme-two:text-themeTwoText hover:bg-gray-100 dark:hover:bg-gray-700 theme-one:hover:bg-themeOneBg/70 theme-two:hover:bg-themeTwoBg/70">
                                 <i class="fas fa-user-circle mr-1"></i> Profil
                             </a>
-                            <a href="{{ path('app_logout') }}" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700">
+                            <a href="{{ path('app_logout') }}" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 theme-one:text-themeOneText theme-two:text-themeTwoText hover:bg-gray-100 dark:hover:bg-gray-700 theme-one:hover:bg-themeOneBg/70 theme-two:hover:bg-themeTwoBg/70">
                                 <i class="fas fa-sign-out-alt mr-1"></i> Déconnexion
                             </a>
                         </div>
@@ -72,10 +70,10 @@
                 </div>
             {% else %}
                 <div class="flex items-center space-x-2">
-                    <a href="{{ path('app_login') }}" class="px-4 py-2 rounded-md text-sm font-medium text-primary-dark border border-primary-dark hover:bg-primary-dark hover:text-white transition duration-150">
+                    <a href="{{ path('app_login') }}" class="px-4 py-2 rounded-md text-sm font-medium text-primary-dark dark:text-primary-light theme-one:text-themeOnePrimary theme-two:text-themeTwoPrimary border border-primary-dark dark:border-primary-light theme-one:border-themeOnePrimary theme-two:border-themeTwoPrimary hover:bg-primary-dark dark:hover:bg-primary theme-one:hover:bg-themeOnePrimary theme-two:hover:bg-themeTwoPrimary hover:text-white transition duration-150">
                         Connexion
                     </a>
-                    <a href="{{ path('app_register') }}" class="px-4 py-2 rounded-md text-sm font-medium bg-primary-dark text-white hover:bg-primary transition duration-150">
+                    <a href="{{ path('app_register') }}" class="px-4 py-2 rounded-md text-sm font-medium bg-primary-dark dark:bg-primary theme-one:bg-themeOnePrimary theme-two:bg-themeTwoPrimary text-white hover:bg-primary dark:hover:bg-primary-light theme-one:hover:bg-themeOnePrimary/80 theme-two:hover:bg-themeTwoPrimary/80 transition duration-150">
                         Inscription
                     </a>
                 </div>
@@ -85,36 +83,32 @@
         {% if app.user %}
             <div class="md:hidden">
                 <div class="flex flex-wrap justify-center space-x-2 pb-2">
-                    <a href="{{ path('app_home') }}" class="px-3 py-2 rounded-md text-sm font-medium {% if app.request.get('_route') == 'app_home' %}text-white bg-primary-dark{% else %}text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700{% endif %}">
+                    <a href="{{ path('app_home') }}" class="px-3 py-2 rounded-md text-sm font-medium {% if app.request.get('_route') == 'app_home' %}text-white bg-primary-dark dark:bg-primary theme-one:bg-themeOnePrimary theme-two:bg-themeTwoPrimary{% else %}text-gray-700 dark:text-gray-300 theme-one:text-themeOneText theme-two:text-themeTwoText hover:bg-gray-100 dark:hover:bg-gray-700 theme-one:hover:bg-themeOneBg/50 theme-two:hover:bg-themeTwoBg/50{% endif %}">
                         <i class="fas fa-home mr-1"></i> Accueil
                     </a>
                     
-                    <a href="{{ path('app_wardrobe') }}" class="px-3 py-2 rounded-md text-sm font-medium {% if app.request.get('_route') starts with 'app_wardrobe' %}text-white bg-primary-dark{% else %}text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700{% endif %}">
+                    <a href="{{ path('app_wardrobe') }}" class="px-3 py-2 rounded-md text-sm font-medium {% if app.request.get('_route') starts with 'app_wardrobe' %}text-white bg-primary-dark dark:bg-primary theme-one:bg-themeOnePrimary theme-two:bg-themeTwoPrimary{% else %}text-gray-700 dark:text-gray-300 theme-one:text-themeOneText theme-two:text-themeTwoText hover:bg-gray-100 dark:hover:bg-gray-700 theme-one:hover:bg-themeOneBg/50 theme-two:hover:bg-themeTwoBg/50{% endif %}">
                         <i class="fas fa-tshirt mr-1"></i> Garde-robe
                     </a>
                     
-                    <a href="{{ path('app_outfit_history') }}" class="px-3 py-2 rounded-md text-sm font-medium {% if app.request.get('_route') starts with 'app_outfit' %}text-white bg-primary-dark{% else %}text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700{% endif %}">
+                    <a href="{{ path('app_outfit_history') }}" class="px-3 py-2 rounded-md text-sm font-medium {% if app.request.get('_route') starts with 'app_outfit_history' %}text-white bg-primary-dark dark:bg-primary theme-one:bg-themeOnePrimary theme-two:bg-themeTwoPrimary{% else %}text-gray-700 dark:text-gray-300 theme-one:text-themeOneText theme-two:text-themeTwoText hover:bg-gray-100 dark:hover:bg-gray-700 theme-one:hover:bg-themeOneBg/50 theme-two:hover:bg-themeTwoBg/50{% endif %}">
                         <i class="fas fa-history mr-1"></i> Tenues
                     </a>
                     
-                    <a href="{{ path('app_outfit_generator') }}" class="px-3 py-2 rounded-md text-sm font-medium {% if app.request.get('_route') starts with 'app_outfit_generator' %}text-white bg-primary-dark{% else %}text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700{% endif %}">
-                        <i class="fas fa-tshirt mr-1"></i> Générateur de Tenues
+                    <a href="{{ path('app_outfit_generator') }}" class="px-3 py-2 rounded-md text-sm font-medium {% if app.request.get('_route') starts with 'app_outfit_generator' %}text-white bg-primary-dark dark:bg-primary theme-one:bg-themeOnePrimary theme-two:bg-themeTwoPrimary{% else %}text-gray-700 dark:text-gray-300 theme-one:text-themeOneText theme-two:text-themeTwoText hover:bg-gray-100 dark:hover:bg-gray-700 theme-one:hover:bg-themeOneBg/50 theme-two:hover:bg-themeTwoBg/50{% endif %}">
+                        <i class="fas fa-magic mr-1"></i> Générateur
                     </a>
                     
-                    <a href="{{ path('app_ai_image_analyze') }}" class="px-3 py-2 rounded-md text-sm font-medium {% if app.request.get('_route') starts with 'app_ai_image_analyze' %}text-white bg-primary-dark{% else %}text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700{% endif %}">
-                        <i class="fas fa-camera mr-1"></i> Analyser une Tenue
+                    <a href="{{ path('app_ai_image_analyze') }}" class="px-3 py-2 rounded-md text-sm font-medium {% if app.request.get('_route') starts with 'app_ai_image_analyze' %}text-white bg-primary-dark dark:bg-primary theme-one:bg-themeOnePrimary theme-two:bg-themeTwoPrimary{% else %}text-gray-700 dark:text-gray-300 theme-one:text-themeOneText theme-two:text-themeTwoText hover:bg-gray-100 dark:hover:bg-gray-700 theme-one:hover:bg-themeOneBg/50 theme-two:hover:bg-themeTwoBg/50{% endif %}">
+                        <i class="fas fa-camera mr-1"></i> Analyser
                     </a>
                     
-                    <a href="{{ path('app_social_feed') }}" class="px-3 py-2 rounded-md text-sm font-medium {% if app.request.get('_route') starts with 'app_social' %}text-white bg-primary-dark{% else %}text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700{% endif %}">
+                    <a href="{{ path('app_social_feed') }}" class="px-3 py-2 rounded-md text-sm font-medium {% if app.request.get('_route') starts with 'app_social' %}text-white bg-primary-dark dark:bg-primary theme-one:bg-themeOnePrimary theme-two:bg-themeTwoPrimary{% else %}text-gray-700 dark:text-gray-300 theme-one:text-themeOneText theme-two:text-themeTwoText hover:bg-gray-100 dark:hover:bg-gray-700 theme-one:hover:bg-themeOneBg/50 theme-two:hover:bg-themeTwoBg/50{% endif %}">
                         <i class="fas fa-users mr-1"></i> Social
                     </a>
                     
-                    <a href="{{ path('app_partner_shop') }}" class="px-3 py-2 rounded-md text-sm font-medium {% if app.request.get('_route') starts with 'app_partner' %}text-white bg-primary-dark{% else %}text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700{% endif %}">
-                        <i class="fas fa-shopping-bag mr-1"></i> Shop
-                    </a>
-                    
                     {% if is_granted('ROLE_ADMIN') %}
-                        <a href="{{ path('app_admin_dashboard') }}" class="px-3 py-2 rounded-md text-sm font-medium bg-secondary-dark text-white hover:bg-secondary">
+                        <a href="{{ path('app_admin_dashboard') }}" class="px-3 py-2 rounded-md text-sm font-medium bg-secondary-dark text-white hover:bg-secondary dark:bg-secondary theme-one:bg-themeOneSecondary theme-two:bg-themeTwoSecondary">
                             <i class="fas fa-cog mr-1"></i> Admin
                         </a>
                     {% endif %}
@@ -140,20 +134,59 @@
         }
     });
     
-    document.getElementById('theme-toggle')?.addEventListener('click', function() {
-        if (document.documentElement.classList.contains('dark')) {
-            document.documentElement.classList.remove('dark');
-            localStorage.theme = 'light';
-        } else {
-            document.documentElement.classList.add('dark');
-            localStorage.theme = 'dark';
+    const themeToggle = document.getElementById('theme-toggle');
+    if (themeToggle) {
+        const htmlElement = document.documentElement;
+        const themeIcon = document.getElementById('theme-icon');
+        const themes = ['default', 'dark', 'theme-one', 'theme-two'];
+        const themeIcons = {
+            'default': { icon: 'fa-sun', color: 'text-yellow-500' },
+            'dark': { icon: 'fa-moon', color: 'text-blue-300' },
+            'theme-one': { icon: 'fa-palette', color: 'text-pink-500' },
+            'theme-two': { icon: 'fa-leaf', color: 'text-green-500' }
+        };
+        
+        let currentTheme = localStorage.getItem('theme') || 'default';
+        if (!themes.includes(currentTheme)) {
+            currentTheme = 'default';
         }
-    });
+        
+        function updateThemeIcon(theme) {
+            themeIcon.className = '';
+            themeIcon.classList.add('fas', themeIcons[theme].icon, themeIcons[theme].color);
+        }
+        
+        function applyTheme(theme) {
+            htmlElement.classList.remove(...themes.filter(t => t !== 'default'));
+            
+            if (theme !== 'default') {
+                htmlElement.classList.add(theme);
+            }
+            
+            localStorage.setItem('theme', theme);
+            currentTheme = theme;
+            
+            updateThemeIcon(theme);
+        }
+        
+        applyTheme(currentTheme);
+        
+        themeToggle.addEventListener('click', function() {
+            const currentIndex = themes.indexOf(currentTheme);
+            const nextIndex = (currentIndex + 1) % themes.length;
+            const nextTheme = themes[nextIndex];
+            
+            applyTheme(nextTheme);
+        });
+    }
     
-    if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+    if (!localStorage.getItem('theme') && window.matchMedia('(prefers-color-scheme: dark)').matches) {
         document.documentElement.classList.add('dark');
-    } else {
-        document.documentElement.classList.remove('dark');
+        if (document.getElementById('theme-icon')) {
+            document.getElementById('theme-icon').className = '';
+            document.getElementById('theme-icon').classList.add('fas', 'fa-moon', 'text-blue-300');
+        }
+        localStorage.setItem('theme', 'dark');
     }
 </script>
 {% endif %}

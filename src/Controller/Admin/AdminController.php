@@ -7,6 +7,7 @@ use App\Repository\CategoryRepository;
 use App\Repository\ClothingItemRepository;
 use App\Repository\OutfitRepository;
 use App\Repository\OutfitHistoryRepository;
+use App\Repository\AINotificationRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Response;
@@ -24,6 +25,7 @@ class AdminController extends AbstractController
     private OutfitRepository $outfitRepository;
     private OutfitHistoryRepository $outfitHistoryRepository;
     private AdminAIService $adminAIService;
+    private AINotificationRepository $notificationRepository;
     
     public function __construct(
         EntityManagerInterface $entityManager,
@@ -32,7 +34,8 @@ class AdminController extends AbstractController
         ClothingItemRepository $clothingItemRepository,
         OutfitRepository $outfitRepository,
         OutfitHistoryRepository $outfitHistoryRepository,
-        AdminAIService $adminAIService
+        AdminAIService $adminAIService,
+        AINotificationRepository $notificationRepository
     ) {
         $this->entityManager = $entityManager;
         $this->userRepository = $userRepository;
@@ -41,6 +44,7 @@ class AdminController extends AbstractController
         $this->outfitRepository = $outfitRepository;
         $this->outfitHistoryRepository = $outfitHistoryRepository;
         $this->adminAIService = $adminAIService;
+        $this->notificationRepository = $notificationRepository;
     }
 
     #[Route('/', name: 'app_admin_dashboard')]
@@ -59,9 +63,17 @@ class AdminController extends AbstractController
         ];
     
         $aiInsights = $this->adminAIService->generateAdminInsights($adminData);
-    
-        $notifications = [
-        ];
+        
+        $notifications = $this->notificationRepository->findBy(
+            [],
+            ['createdAt' => 'DESC'],
+            10
+        );
+        
+        $userGrowthData = $this->getUserGrowthData();
+        $outfitStyleData = $this->getOutfitStyleData();
+        $categoryData = $this->getCategoryData();
+        $activityData = $this->getActivityData();
     
         return $this->render('admin/dashboard.html.twig', [
             'stats' => [
@@ -71,7 +83,11 @@ class AdminController extends AbstractController
                 'shared_outfits' => $totalSharedOutfits
             ],
             'aiInsights' => $aiInsights['insights'] ?? 'Aucun insight disponible',
-            'notifications' => $notifications
+            'notifications' => $notifications,
+            'userGrowthData' => $userGrowthData,
+            'outfitStyleData' => $outfitStyleData,
+            'categoryData' => $categoryData,
+            'activityData' => $activityData
         ]);
     }
     
@@ -108,19 +124,110 @@ class AdminController extends AbstractController
     #[Route('/statistics', name: 'app_admin_statistics')]
     public function statistics(): Response
     {
-        $userGrowthData = [
-            'labels' => ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Juin'],
-            'data' => [12, 19, 25, 30, 35, 42]
-        ];
-        
-        $outfitsByStyleData = [
-            'labels' => ['Casual', 'Formel', 'Sport', 'Soirée'],
-            'data' => [45, 18, 32, 12]
-        ];
+        $userGrowthData = $this->getUserGrowthData();
+        $outfitsByStyleData = $this->getOutfitStyleData();
         
         return $this->render('admin/statistics.html.twig', [
             'userGrowthData' => $userGrowthData,
             'outfitsByStyleData' => $outfitsByStyleData
         ]);
+    }
+    
+    private function getUserGrowthData(): array
+    {
+        $months = ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Juin'];
+        $totalUsers = count($this->userRepository->findAll());
+        
+        $data = [
+            (int)($totalUsers * 0.3),  
+            (int)($totalUsers * 0.45),
+            (int)($totalUsers * 0.6),  
+            (int)($totalUsers * 0.7),  
+            (int)($totalUsers * 0.85), 
+            $totalUsers                
+        ];
+        
+        if ($totalUsers === 0) {
+            $data = [12, 19, 25, 30, 35, 42];
+        }
+
+        return [
+            'labels' => $months,
+            'data' => $data
+        ];
+    }
+    
+    private function getOutfitStyleData(): array
+    {
+        $styleMap = [
+            'casual' => 0,
+            'formel' => 0,
+            'sport' => 0,
+            'soirée' => 0
+        ];
+        
+        foreach ($this->outfitRepository->findAll() as $outfit) {
+            $style = strtolower($outfit->getStyle() ?? '');
+            if (isset($styleMap[$style])) {
+                $styleMap[$style]++;
+            }
+        }
+        
+        foreach ($this->outfitHistoryRepository->findAll() as $history) {
+            $style = strtolower($history->getStyle() ?? '');
+            if (isset($styleMap[$style])) {
+                $styleMap[$style]++;
+            }
+        }
+        
+        if (array_sum(array_values($styleMap)) === 0) {
+            $styleMap = ['casual' => 45, 'formel' => 18, 'sport' => 32, 'soirée' => 12];
+        }
+        
+        return [
+            'labels' => array_map('ucfirst', array_keys($styleMap)),
+            'data' => array_values($styleMap)
+        ];
+    }
+    
+
+    private function getCategoryData(): array
+    {
+        $categories = $this->categoryRepository->findAll();
+        
+        $categoryData = [];
+        foreach ($categories as $category) {
+            $categoryData[$category->getName() ?? 'Non catégorisé'] = count($category->getClothingItems());
+        }
+        
+        if (empty($categoryData)) {
+            $categoryData = [
+                'T-shirts' => 45,
+                'Jeans' => 38,
+                'Robes' => 22,
+                'Vestes' => 16,
+                'Chaussures' => 30
+            ];
+        }
+        
+        return [
+            'labels' => array_keys($categoryData),
+            'data' => array_values($categoryData)
+        ];
+    }
+    
+
+    private function getActivityData(): array
+    {
+        $days = ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim'];
+        
+        $outfitsGenerated = [8, 12, 15, 10, 20, 25, 18];
+        $outfitsShared = [3, 5, 7, 4, 8, 10, 6];
+        
+        return [
+            'labels' => $days,
+            'outfitsGenerated' => $outfitsGenerated,
+            'outfitsShared' => $outfitsShared
+        ];
     }
 }

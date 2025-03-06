@@ -1,27 +1,58 @@
 {% extends 'base.html.twig' %}
 
-{% block title %}Statistiques{% endblock %}
+{% block title %}Statistiques | Shape of You{% endblock %}
 
 {% block body %}
-<div class="container mx-auto px-4 py-8">
-    <h1 class="text-2xl font-bold mb-6">Statistiques de l'application</h1>
+<div class="max-w-6xl mx-auto px-4 py-8">
+    <h1 class="text-2xl font-bold mb-6 dark:text-white">Statistiques de l'application</h1>
     
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div class="bg-white shadow rounded-lg p-6">
-            <h2 class="text-xl font-semibold mb-4">Croissance des utilisateurs</h2>
-            <canvas id="userGrowthChart" class="w-full h-64"></canvas>
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+        <div class="bg-white dark:bg-gray-700 shadow rounded-lg p-6">
+            <h2 class="text-xl font-semibold mb-4 dark:text-white">Évolution des utilisateurs</h2>
+            <div class="chart-container" style="position: relative; height: 300px;">
+                <canvas id="userGrowthChart"></canvas>
+            </div>
         </div>
         
-        <div class="bg-white shadow rounded-lg p-6">
-            <h2 class="text-xl font-semibold mb-4">Tenues par style</h2>
-            <canvas id="outfitStyleChart" class="w-full h-64"></canvas>
+        <div class="bg-white dark:bg-gray-700 shadow rounded-lg p-6">
+            <h2 class="text-xl font-semibold mb-4 dark:text-white">Tenues par style</h2>
+            <div class="chart-container" style="position: relative; height: 300px;">
+                <canvas id="outfitStyleChart"></canvas>
+            </div>
+        </div>
+    </div>
+    
+    <div class="bg-white dark:bg-gray-700 shadow rounded-lg p-6 mb-8">
+        <h2 class="text-xl font-semibold mb-4 dark:text-white">Tenues par utilisateur</h2>
+        <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                <thead>
+                    <tr>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Utilisateur</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Tenues créées</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Tenues partagées</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Vêtements ajoutés</th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+                    {% for userStat in userStats %}
+                    <tr>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium dark:text-white">{{ userStat.username }}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm dark:text-gray-300">{{ userStat.outfitsCount }}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm dark:text-gray-300">{{ userStat.sharedOutfitsCount }}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm dark:text-gray-300">{{ userStat.clothingItemsCount }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
         </div>
     </div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
-    const userCtx = document.getElementById('userGrowthChart').getContext('2d');
+function initializeCharts() {
+    const userCtx = document.getElementById('userGrowthChart');
     new Chart(userCtx, {
         type: 'line',
         data: {
@@ -31,18 +62,17 @@
                 data: {{ userGrowthData.data|json_encode|raw }},
                 borderColor: 'rgb(59, 130, 246)',
                 backgroundColor: 'rgba(59, 130, 246, 0.1)',
-                tension: 0.1
+                tension: 0.3,
+                fill: true
             }]
         },
         options: {
             responsive: true,
-            scales: {
-                y: { beginAtZero: true }
-            }
+            maintainAspectRatio: false
         }
     });
-
-    const styleCtx = document.getElementById('outfitStyleChart').getContext('2d');
+    
+    const styleCtx = document.getElementById('outfitStyleChart');
     new Chart(styleCtx, {
         type: 'pie',
         data: {
@@ -53,13 +83,29 @@
                     'rgb(59, 130, 246)',
                     'rgb(16, 185, 129)',
                     'rgb(245, 158, 11)',
-                    'rgb(239, 68, 68)'
+                    'rgb(239, 68, 68)',
+                    'rgb(139, 92, 246)'
                 ]
             }]
         },
         options: {
-            responsive: true
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'bottom'
+                }
+            }
         }
     });
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    initializeCharts();
+});
+
+window.addEventListener('resize', function() {
+    setTimeout(initializeCharts, 100);
+});
 </script>
 {% endblock %}

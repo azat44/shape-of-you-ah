@@ -1,101 +1,84 @@
+
 document.addEventListener("DOMContentLoaded", function () {
-    const themeSwitch = document.getElementById("theme-switch");
-    const iconSun = document.getElementById("theme-icon-sun");
-    const iconMoon = document.getElementById("theme-icon-moon");
-    const iconCustom = document.getElementById("theme-icon-custom");
-    const html = document.documentElement;
+    const themeButtons = document.querySelectorAll('.theme-toggle');
+    const htmlElement = document.documentElement;
     
-    if (!themeSwitch || !iconSun || !iconMoon || !iconCustom) {
-        console.warn("⚠️ Bouton de switch de thème ou icônes non trouvés.");
-        return;
-    }
+    const themes = ["default", "dark", "theme-one", "theme-two"];
     
-    const themes = ["light", "dark", "theme-one", "theme-two"];
-    let currentTheme = localStorage.getItem("theme") || "light";
+    let currentTheme = localStorage.getItem("theme") || "default";
     
     if (!themes.includes(currentTheme)) {
-        currentTheme = "light";
+        currentTheme = "default";
         localStorage.setItem("theme", currentTheme);
     }
     
-    function cleanupThemeClasses() {
-        html.classList.remove(...themes);
-        document.body.classList.remove("dark");
-        
-        const textElements = document.querySelectorAll('*');
-        textElements.forEach(el => {
-            el.classList.remove(
-                'text-gray-800', 'text-black', 'text-white', 
-                'text-themeOneText', 'text-themeTwoText',
-                'dark:text-white', 
-                'theme-one:text-themeOneText', 
-                'theme-two:text-themeTwoText'
+    function updateThemeButtons(activeTheme) {
+        themeButtons.forEach(button => {
+            const buttonTheme = button.getAttribute('data-theme');
+            
+            button.classList.remove(
+                'bg-primary', 'bg-gray-200', 'text-white', 'text-gray-700', 
+                'dark:text-gray-300', 'ring-2', 'ring-primary-light', 'ring-blue-300',
+                'bg-dark-bg', 'bg-fashion-primary', 'bg-nature-primary',
+                'ring-blue-400', 'ring-fashion-accent', 'ring-nature-accent'
             );
+            
+            if (buttonTheme === activeTheme) {
+                switch (activeTheme) {
+                    case 'dark':
+                        button.classList.add('bg-gray-800', 'text-white', 'ring-2', 'ring-blue-400');
+                        break;
+                    case 'theme-one':
+                        button.classList.add('bg-themeOnePrimary', 'text-white', 'ring-2', 'ring-themeOneBorder');
+                        break;
+                    case 'theme-two':
+                        button.classList.add('bg-themeTwoPrimary', 'text-white', 'ring-2', 'ring-themeTwoBorder');
+                        break;
+                    default:
+                        button.classList.add('bg-primary', 'text-white', 'ring-2', 'ring-blue-300');
+                        break;
+                }
+            } else {
+                button.classList.add('bg-gray-200', 'text-gray-700', 'hover:bg-gray-300');
+                
+                if (activeTheme === 'dark') {
+                    button.classList.add('dark:bg-gray-700', 'dark:text-gray-300', 'dark:hover:bg-gray-600');
+                } else if (activeTheme === 'theme-one') {
+                    button.classList.add('theme-one:bg-themeOneBg/50', 'theme-one:text-themeOneText');
+                } else if (activeTheme === 'theme-two') {
+                    button.classList.add('theme-two:bg-themeTwoBg/50', 'theme-two:text-themeTwoText');
+                }
+            }
         });
     }
     
-    function applyTheme(theme) {
-        cleanupThemeClasses();
-        html.classList.add(theme);
-        
-        const allTextElements = document.querySelectorAll('body, p, span, div, h1, h2, h3, h4, h5, h6, label, a, button, input, textarea');
-        
-        allTextElements.forEach(el => {
-            switch(theme) {
-                case 'dark':
-                    el.classList.add('text-white');
-                    break;
-                case 'theme-one':
-                    el.classList.add('text-themeOneText');
-                    break;
-                case 'theme-two':
-                    el.classList.add('text-themeTwoText');
-                    break;
-                default: 
-                    el.classList.add('text-gray-800');
-            }
-        });
+    function setTheme(theme) {
+        htmlElement.classList.remove('dark', 'theme-one', 'theme-two');
         
         if (theme === 'dark') {
-            document.body.classList.add('dark');
+            htmlElement.classList.add('dark');
+        } else if (theme === 'theme-one') {
+            htmlElement.classList.add('theme-one');
+        } else if (theme === 'theme-two') {
+            htmlElement.classList.add('theme-two');
         }
         
         localStorage.setItem("theme", theme);
         currentTheme = theme;
-        updateThemeIcons(theme);
+        
+        updateThemeButtons(theme);
     }
     
-    function updateThemeIcons(theme) {
-        [iconSun, iconMoon, iconCustom].forEach(icon => icon.classList.add('hidden'));
-        
-        if (theme === 'light') {
-            iconSun.classList.remove('hidden');
-        } else if (theme === 'dark') {
-            iconMoon.classList.remove('hidden');
-        } else {
-            iconCustom.classList.remove('hidden');
-            
-            iconCustom.classList.remove('text-blue-500', 'text-yellow-500');
-            iconCustom.classList.add(theme === 'theme-one' ? 'text-yellow-500' : 'text-blue-500');
-        }
+    themeButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            const theme = this.getAttribute('data-theme');
+            setTheme(theme);
+        });
+    });
+    
+    setTheme(currentTheme);
+    
+    if (!localStorage.getItem('theme') && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+        setTheme('dark');
     }
-    
-    applyTheme(currentTheme);
-    
-    themeSwitch.addEventListener("click", () => {
-        const currentIndex = themes.indexOf(currentTheme);
-        const nextIndex = (currentIndex + 1) % themes.length;
-        const nextTheme = themes[nextIndex];
-        
-        applyTheme(nextTheme);
-    });
-    
-    const observer = new MutationObserver(() => {
-        applyTheme(currentTheme);
-    });
-    
-    observer.observe(document.body, { 
-        childList: true, 
-        subtree: true 
-    });
 });
