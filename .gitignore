@@ -7,6 +7,9 @@
 /public/bundles/
 /var/
 /vendor/
+
+.env.local
+.env
 ###< symfony/framework-bundle ###
 
 ###> phpunit/phpunit ###
@@ -30,3 +33,22 @@
 npm-debug.log
 yarn-error.log
 ###< symfony/webpack-encore-bundle ###
+
+###> IDE and OS specific files ###
+.idea/
+.vscode/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+###< IDE and OS specific files ###
+
+###> Composer ###
+/composer.phar
+/composer.lock
+###< Composer ###
+
+###> Logs and databases ###
+*.log
+*.sqlite
+###< Logs and databases ###
