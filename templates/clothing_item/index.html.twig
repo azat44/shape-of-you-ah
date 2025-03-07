@@ -1,0 +1,94 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Liste des vêtements | Shape of You{% endblock %}
+
+{% block body %}
+<div class="container mx-auto px-4 py-8">
+    <div class="flex justify-between items-center mb-6">
+        <h1 class="text-2xl font-bold dark:text-white">Liste des vêtements</h1>
+        <div class="flex space-x-4">
+            <a href="{{ path('app_clothing_item_new') }}" class="bg-primary-dark hover:bg-primary text-white px-4 py-2 rounded">
+                <i class="fas fa-plus mr-1"></i> Ajouter un vêtement
+            </a>
+            <a href="{{ path('app_admin_dashboard') }}" class="text-blue-600 dark:text-blue-400 hover:underline py-2">
+                Retour au dashboard
+            </a>
+        </div>
+    </div>
+    
+    {% for flash_message in app.flashes('success') %}
+    <div class="bg-green-100 border-l-4 border-green-500 text-green-700 p-4 mb-4" role="alert">
+        {{ flash_message }}
+    </div>
+    {% endfor %}
+    
+    <div class="bg-white dark:bg-gray-800 shadow rounded-lg overflow-hidden">
+        <div class="overflow-x-auto">
+            <table class="w-full">
+                <thead class="bg-gray-50 dark:bg-gray-700">
+                    <tr>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Image</th>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Nom</th>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Catégorie</th>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Couleur</th>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Prix</th>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Actions</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
+                    {% if clothing_items is defined and clothing_items is not empty %}
+                        {% for clothing_item in clothing_items %}
+                        <tr class="border-t dark:border-gray-700">
+                            <td class="px-4 py-4 whitespace-nowrap">
+                                <div class="h-10 w-10 rounded-full overflow-hidden">
+                                    {% if clothing_item.imageUrl %}
+                                        <img src="{{ clothing_item.imageUrl }}" alt="{{ clothing_item.name }}" class="h-full w-full object-cover">
+                                    {% else %}
+                                        <img src="/images/placeholder.jpg" alt="{{ clothing_item.name }}" class="h-full w-full object-cover">
+                                    {% endif %}
+                                </div>
+                            </td>
+                            <td class="px-4 py-4 whitespace-nowrap text-sm font-medium dark:text-white">
+                                {{ clothing_item.name }}
+                            </td>
+                            <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                                {{ clothing_item.category.name }}
+                            </td>
+                            <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                                {% if clothing_item.color %}
+                                <span class="inline-block h-4 w-4 rounded-full mr-1" style="background-color: {{ clothing_item.color }};"></span>
+                                {{ clothing_item.color }}
+                                {% else %}
+                                -
+                                {% endif %}
+                            </td>
+                            <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                                {% if clothing_item.price %}
+                                {{ clothing_item.price }}€
+                                {% else %}
+                                -
+                                {% endif %}
+                            </td>
+                            <td class="px-4 py-4 whitespace-nowrap text-sm">
+                                <div class="flex space-x-2">
+                                    <a href="{{ path('app_clothing_item_show', {'id': clothing_item.id}) }}" class="text-blue-600 dark:text-blue-400 hover:underline">Voir</a>
+                                    <a href="{{ path('app_clothing_item_edit', {'id': clothing_item.id}) }}" class="text-yellow-600 dark:text-yellow-400 hover:underline">Modifier</a>
+                                    <form method="post" action="{{ path('app_clothing_item_delete', {'id': clothing_item.id}) }}" onsubmit="return confirm('Êtes-vous sûr de vouloir supprimer ce vêtement?');" style="display:inline-block;">
+                                        <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ clothing_item.id) }}">
+                                        <button type="submit" class="text-red-600 dark:text-red-400 hover:underline">Supprimer</button>
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    {% else %}
+                        <tr>
+                            <td colspan="6" class="px-4 py-4 text-center text-gray-500 dark:text-gray-400">Aucun vêtement trouvé</td>
+                        </tr>
+                    {% endif %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

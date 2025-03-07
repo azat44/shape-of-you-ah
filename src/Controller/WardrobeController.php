@@ -321,13 +321,13 @@ class WardrobeController extends AbstractController
     {
         $form = $this->createForm(ClothingItemType::class, $clothingItem);
         $form->handleRequest($request);
-
+    
         if ($form->isSubmitted() && $form->isValid()) {
             $this->entityManager->flush();
-
+    
             return $this->redirectToRoute('app_clothing_item_index', [], Response::HTTP_SEE_OTHER);
         }
-
+    
         return $this->render('clothing_item/edit.html.twig', [
             'clothing_item' => $clothingItem,
             'form' => $form,

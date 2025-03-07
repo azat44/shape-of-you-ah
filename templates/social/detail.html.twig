@@ -1,0 +1,104 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Détails de la tenue | Shape of You{% endblock %}
+
+{% block body %}
+<div class="max-w-4xl mx-auto px-4 py-8">
+    <div class="bg-white dark:bg-gray-800 shadow-md rounded-lg overflow-hidden">
+        <div class="p-6">
+            <div class="flex flex-col md:flex-row md:items-center md:justify-between mb-6">
+                <h1 class="text-2xl font-bold mb-2 md:mb-0 dark:text-white">{{ outfit.title }}</h1>
+                
+                <div class="flex space-x-2">
+                    <a href="{{ path('app_social_feed') }}" class="inline-flex items-center px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-white rounded-md hover:bg-gray-300 dark:hover:bg-gray-600">
+                        <i class="fas fa-arrow-left mr-2"></i> Retour
+                    </a>
+                </div>
+            </div>
+            
+            <div class="flex flex-col md:flex-row gap-6">
+                <div class="md:w-1/2">
+                    <div class="bg-gray-100 dark:bg-gray-700 rounded-lg overflow-hidden mb-4">
+                        {% if outfit.image_url %}
+                            <img src="{{ outfit.image_url }}" alt="{{ outfit.title }}" class="w-full h-auto">
+                        {% else %}
+                            <div class="p-6 text-center">
+                                <i class="fas fa-tshirt text-5xl text-gray-400 mb-2"></i>
+                                <p class="text-gray-500 dark:text-gray-400">Aucune image disponible</p>
+                            </div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="bg-gray-50 dark:bg-gray-700 rounded-lg p-4 mb-4">
+                        <h2 class="text-lg font-semibold mb-2 dark:text-white">Informations</h2>
+                        
+                        <ul class="space-y-2 text-sm">
+                            <li class="flex items-start">
+                                <span class="text-gray-500 dark:text-gray-400 w-24">Style:</span>
+                                <span class="font-medium dark:text-white">{{ outfit.style }}</span>
+                            </li>
+                            <li class="flex items-start">
+                                <span class="text-gray-500 dark:text-gray-400 w-24">Partagé par:</span>
+                                <span class="font-medium dark:text-white">{{ outfit.user.name }}</span>
+                            </li>
+                            <li class="flex items-start">
+                                <span class="text-gray-500 dark:text-gray-400 w-24">Date:</span>
+                                <span class="font-medium dark:text-white">{{ outfit.created_at|date('d/m/Y') }}</span>
+                            </li>
+                            <li class="flex items-start">
+                                <span class="text-gray-500 dark:text-gray-400 w-24">Likes:</span>
+                                <span class="font-medium dark:text-white">{{ outfit.likes }}</span>
+                            </li>
+                        </ul>
+                    </div>
+                    
+                    {% if outfit.description %}
+                        <div class="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
+                            <h2 class="text-lg font-semibold mb-2 dark:text-white">Description</h2>
+                            <p class="text-gray-700 dark:text-gray-300">{{ outfit.description }}</p>
+                        </div>
+                    {% endif %}
+                </div>
+                
+                <div class="md:w-1/2">
+                    <div class="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
+                        <h2 class="text-lg font-semibold mb-3 dark:text-white">Éléments de la tenue</h2>
+                        
+                        {% if outfit.items and outfit.items|length > 0 %}
+                            <ul class="space-y-3">
+                                {% for item in outfit.items %}
+                                    <li class="bg-white dark:bg-gray-800 rounded-md shadow overflow-hidden">
+                                        <div class="flex items-center p-3">
+                                            <div class="w-16 h-16 flex-shrink-0">
+                                                {% if item.image_url is defined and item.image_url %}
+                                                    <img src="{{ item.image_url }}" alt="{{ item.name }}" class="w-full h-full object-cover">
+                                                {% else %}
+                                                    <div class="w-full h-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center">
+                                                        <i class="fas fa-tshirt text-gray-400"></i>
+                                                    </div>
+                                                {% endif %}
+                                            </div>
+                                            
+                                            <div class="ml-4 flex-grow">
+                                                <h3 class="font-medium dark:text-white">{{ item.name }}</h3>
+                                                {% if item.category is defined and item.category %}
+                                                    <p class="text-sm text-gray-500 dark:text-gray-400">{{ item.category }}</p>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                    </li>
+                                {% endfor %}
+                            </ul>
+                        {% else %}
+                            <div class="text-center py-4">
+                                <i class="fas fa-exclamation-circle text-yellow-500 text-2xl mb-2"></i>
+                                <p class="text-gray-600 dark:text-gray-400">Aucun élément dans cette tenue</p>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -32,10 +32,10 @@
                     <div class="bg-gray-50 dark:bg-gray-700 p-4 rounded-md">
                         <ul class="list-disc list-inside text-sm text-gray-600 dark:text-gray-300">
                             {% for item in category.clothingItems %}
-                                <li>{{ item.name }}</li>
-                                {% if loop.index >= 5 and category.clothingItems|length > 5 %}
+                                {% if loop.index <= 5 %}
+                                    <li>{{ item.name }}</li>
+                                {% elseif loop.index == 6 %}
                                     <li>... et {{ category.clothingItems|length - 5 }} autres articles</li>
-                                    {% break %}
                                 {% endif %}
                             {% endfor %}
                         </ul>

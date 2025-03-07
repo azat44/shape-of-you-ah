@@ -156,7 +156,8 @@ class OutfitController extends AbstractController
         
         return $this->render('outfit/details.html.twig', [
             'outfit' => [
-                'id' => $outfit->getId(),
+                'id' => $outfit->get
+                (),
                 'type' => 'outfit',
                 'title' => $outfit->getTitle() ?: 'Tenue sans titre',
                 'description' => $outfit->getDescription(),
