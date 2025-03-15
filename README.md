@@ -6,6 +6,11 @@
 ## Description du projet
 Shape of You est une application mobile-first qui aide les utilisateurs à mieux s'habiller grâce à l'intelligence artificielle. L'application détecte automatiquement les vêtements, propose des tenues, et offre des conseils personnalisés.
 
+
+## Mise en production
+
+https://violet-vulture-511538.hostingersite.com
+
 ## Fonctionnalités implémentées
 
 ### Partie Utilisateur
